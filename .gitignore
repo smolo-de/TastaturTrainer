@@ -1,0 +1,9 @@
+# Build-Ausgabe
+dist/
+# Node / Tools
+node_modules/
+*.log
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
