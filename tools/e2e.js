@@ -63,19 +63,29 @@ const check = (cond, msg) => { if (!cond) problems.push('ASSERT ' + msg); };
 
 (async () => {
   const bin = findBrowser();
-  const port = 9300 + Math.floor(Math.random() * 600);
   const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bt-e2e-'));
-  const args = ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profileDir}`, '--no-first-run',
-    '--no-default-browser-check', '--disable-gpu', '--window-size=1366,900', 'about:blank'];
+  /* Port 0: der Browser wählt selbst einen freien Port und schreibt ihn in „DevToolsActivePort“ */
+  const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profileDir}`, '--no-first-run',
+    '--no-default-browser-check', '--disable-gpu', '--disable-dev-shm-usage', '--window-size=1366,900', 'about:blank'];
   if (process.env.CI) args.unshift('--no-sandbox');
-  const proc = spawn(bin, args, { stdio: 'ignore' });
+  const proc = spawn(bin, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderr = '';
+  let exited = null;
+  proc.stderr.on('data', (d) => { stderr = (stderr + d).slice(-4000); });
+  proc.on('exit', (code) => { exited = code; });
+  proc.on('error', (e) => { exited = e.message; });
+  const portFile = path.join(profileDir, 'DevToolsActivePort');
   let targets = [];
-  for (let i = 0; i < 80 && !targets.find((x) => x.type === 'page'); i++) {
-    try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); } catch (e) { /* startet noch */ }
+  let port = null;
+  for (let i = 0; i < 240 && exited === null && !targets.find((x) => x.type === 'page'); i++) {
+    if (!port && fs.existsSync(portFile)) port = Number(fs.readFileSync(portFile, 'utf8').split('\n')[0]) || null;
+    if (port) { try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); } catch (e) { /* startet noch */ } }
     await sleep(250);
   }
   const page = targets.find((x) => x.type === 'page');
-  if (!page) throw new Error('Browser nicht erreichbar');
+  if (!page) {
+    throw new Error(`Browser nicht erreichbar (${bin}, Port ${port}, beendet: ${exited})\n--- Browser-Ausgabe ---\n${stderr.trim() || '(leer)'}`);
+  }
   const ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; });
   let id = 0;
