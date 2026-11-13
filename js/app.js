@@ -2,19 +2,20 @@
 /* BlindTrainer – App-Kern, Navigation, Profile, Startseite, Lernpfad, Lektionen */
 (function (BT) {
   const esc = BT.esc;
+  const t = (k, p) => BT.t(k, p);
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const P = () => BT.Store.profile;
   const Pr = BT.Progress;
   const pct = (a) => Math.round(a * 100) + ' %';
-  const int = (n) => Math.round(n).toLocaleString('de-DE');
+  const int = (n) => BT.fmt.int(n);
   const isEditable = (el) => !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
   const starsHtml = (n, total = 3) => `<span class="stars">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}">★</i>`).join('')}</span>`;
   const rstat = (v, l) => `<div class="rstat"><b>${v}</b><span>${l}</span></div>`;
   const main = () => $('#main');
 
-  BT.ui = { $, $$, esc, pick, pct, int, starsHtml, rstat, P };
+  BT.ui = { $, $$, esc, pick, pct, int, starsHtml, rstat, P, t };
 
   const S = BT.Screens = {};
   const NO_PROFILE_OK = new Set(['profiles']);
@@ -23,6 +24,7 @@
     keyHandler: null,
     cleanup: null,
     current: null,
+    currentArgs: [],
     readyAt: 0,
     modalOpen: false,
     modalOnKey: null,
@@ -30,13 +32,14 @@
 
     init() {
       BT.Store.load();
+      BT.setLang(BT.Store.currentLang());
       document.addEventListener('keydown', (e) => this.onKeyDown(e));
       document.addEventListener('click', (e) => this.onClick(e));
       document.addEventListener('pointerdown', () => BT.Sound.unlock());
-      Pr.onGoal = () => { this.toast('🥇 <b>Tagesziel erreicht!</b> Super, weiter so!'); BT.Sound.success(); };
+      Pr.onGoal = () => { this.toast(t('toast.goal')); BT.Sound.success(); };
       this.applySettings();
       this.go(P() ? 'home' : 'profiles');
-      if (!BT.Store.persistOk) this.toast('⚠️ Dein Browser erlaubt kein Speichern. Der Fortschritt geht beim Schließen verloren.', 7000);
+      if (!BT.Store.persistOk) this.toast(t('toast.noStorage'), 7000);
     },
 
     applySettings() {
@@ -44,6 +47,23 @@
       const st = p ? p.settings : { theme: 'light', textSize: 'm' };
       document.documentElement.dataset.theme = st.theme === 'dark' ? 'dark' : 'light';
       document.body.dataset.ts = st.textSize || 'm';
+    },
+
+    /* Sprache wechseln: Texte, Kurs und Tastatur-Layout; aktuelle Seite neu aufbauen */
+    switchLang(code) {
+      BT.Store.setLang(code);
+      BT.setLang(code);
+      const name = ['profiles', 'settings'].includes(this.current) ? this.current : 'home';
+      this.go(name);
+    },
+    langSwitchHtml() {
+      return `<div class="seg lang-switch" role="group" aria-label="${esc(t('welcome.language'))}">${BT.langs().map((c) => {
+        const m = BT.I18N[c].meta;
+        return `<button class="${c === BT.lang ? 'on' : ''}" data-lang="${c}" title="${esc(m.keyboard)}"><span class="lang-code">${m.flag}</span> ${esc(m.name)}</button>`;
+      }).join('')}</div>`;
+    },
+    bindLangSwitch(root) {
+      $$('[data-lang]', root).forEach((b) => { b.onclick = () => { if (b.dataset.lang !== BT.lang) this.switchLang(b.dataset.lang); }; });
     },
 
     go(name, ...args) {
@@ -74,15 +94,15 @@
       }
       const lv = Pr.levelInfo(p.xp);
       tb.innerHTML = `
-        <button class="brand" data-go="home" title="Startseite"><span class="brand-ic">⌨️</span><span>BlindTrainer</span></button>
+        <button class="brand" data-go="home" title="${esc(t('top.home'))}"><span class="brand-ic">⌨️</span><span>BlindTrainer</span></button>
         <div class="tb-stats">
-          <span class="chip" title="Gesammelte Sterne">⭐ <b>${Pr.totalStars(p)}</b></span>
-          <span class="chip" title="Tage hintereinander geübt">🔥 <b>${Pr.streak(p)}</b></span>
-          <span class="tb-level" title="${esc(lv.title)} – ${lv.into} von ${lv.need} XP">
+          <span class="chip" title="${esc(t('top.stars'))}">⭐ <b>${Pr.totalStars(p)}</b></span>
+          <span class="chip" title="${esc(t('top.streak'))}">🔥 <b>${Pr.streak(p)}</b></span>
+          <span class="tb-level" title="${esc(t('top.level', { title: lv.title, into: int(lv.into), need: int(lv.need) }))}">
             <span class="lv-pill">Lv ${lv.level}</span><span class="xpbar"><i style="width:${lv.pct}%"></i></span>
           </span>
-          <button class="icon-btn" id="tb-sound" title="Ton an/aus">${p.settings.sound ? '🔊' : '🔇'}</button>
-          <button class="profile-btn" data-go="profiles" title="Profil wechseln"><span class="av">${p.avatar}</span><span class="pn">${esc(p.name)}</span></button>
+          <button class="icon-btn" id="tb-sound" title="${esc(t('top.sound'))}">${p.settings.sound ? '🔊' : '🔇'}</button>
+          <button class="profile-btn" data-go="profiles" title="${esc(t('top.switchProfile'))}"><span class="av">${esc(p.avatar)}</span><span class="pn">${esc(p.name)}</span></button>
         </div>`;
       $('#tb-sound').onclick = (e) => {
         p.settings.sound = !p.settings.sound;
@@ -187,13 +207,13 @@
     /* ---------- Belohnungen ---------- */
     rewardsHtml(s) {
       let h = '';
-      if (s.levelUp) h += `<div class="reward levelup">🎉 <b>Level ${s.level}</b> erreicht: ${esc(Pr.levelTitle(s.level))}!</div>`;
+      if (s.levelUp) h += `<div class="reward levelup">${t('reward.levelUp', { level: s.level, title: esc(Pr.levelTitle(s.level)) })}</div>`;
       if (s.newAvatars && s.newAvatars.length) {
-        h += `<div class="reward">Neue Tiere freigeschaltet: <span class="reward-av">${s.newAvatars.map((a) => a.e).join(' ')}</span> <button class="link" data-go="trophies">Jetzt auswählen</button></div>`;
+        h += `<div class="reward">${t('reward.newAnimals')} <span class="reward-av">${s.newAvatars.map((a) => a.e).join(' ')}</span> <button class="link" data-go="trophies">${t('reward.choose')}</button></div>`;
       }
       if (s.ach && s.ach.length) {
-        h += `<div class="reward-ach"><h3>Neue Abzeichen!</h3>${s.ach.map((a) => `
-          <div class="ach-mini"><span class="ach-ic">${a.icon}</span><div><b>${esc(a.title)}</b><small>${esc(a.desc)}</small></div></div>`).join('')}</div>`;
+        h += `<div class="reward-ach"><h3>${t('reward.newBadges')}</h3>${s.ach.map((a) => `
+          <div class="ach-mini"><span class="ach-ic">${a.icon}</span><div><b>${esc(Pr.achTitle(a))}</b><small>${esc(Pr.achDesc(a))}</small></div></div>`).join('')}</div>`;
       }
       return h;
     },
@@ -202,17 +222,18 @@
     newProfileModal() {
       const starters = BT.AVATARS.filter((a) => a.lvl <= 1);
       let chosen = starters[0].e;
+      const hasProfiles = Object.keys(BT.Store.data.profiles).length > 0;
       const card = this.modal(`
-        <h2>Neues Profil</h2>
-        <label class="field"><span>Wie heißt du?</span><input id="np-name" maxlength="16" autocomplete="off" placeholder="Dein Name"></label>
-        <div class="field"><span>Wähle dein Tier:</span>
+        <h2>${t('profile.title')}</h2>
+        <label class="field"><span>${t('profile.name')}</span><input id="np-name" maxlength="16" autocomplete="off" placeholder="${esc(t('profile.namePh'))}"></label>
+        <div class="field"><span>${t('profile.animal')}</span>
           <div class="avatar-pick">${starters.map((a, i) => `<button class="av-opt${i === 0 ? ' sel' : ''}" data-av="${a.e}">${a.e}</button>`).join('')}</div>
-          <p class="hint">Weitere Tiere schaltest du mit höheren Levels frei!</p>
+          <p class="hint">${t('profile.more')}</p>
         </div>
         <div class="modal-actions">
-          ${Object.keys(BT.Store.data.profiles).length ? '<button class="btn ghost" data-close>Abbrechen</button>' : ''}
-          <button class="btn primary" data-primary id="np-ok">Los geht's!</button>
-        </div>`, { closable: Object.keys(BT.Store.data.profiles).length > 0 });
+          ${hasProfiles ? `<button class="btn ghost" data-close>${t('common.cancel')}</button>` : ''}
+          <button class="btn primary" data-primary id="np-ok">${t('profile.go')}</button>
+        </div>`, { closable: hasProfiles });
       const input = $('#np-name', card);
       setTimeout(() => input.focus(), 60);
       $$('.av-opt', card).forEach((b) => {
@@ -243,12 +264,12 @@
       const p = P();
       this.modal(`
         <div class="big-emoji">🦉</div>
-        <h2>Hallo ${esc(p.name)}!</h2>
-        <p>Ich bin <b>Professor Uhu</b> und begleite dich auf deinem Tipp-Abenteuer.</p>
-        <p>Bevor es losgeht: Schau dir kurz an, wie das 10-Finger-System funktioniert. Das dauert nur zwei Minuten!</p>
+        <h2>${t('hello.title', { name: esc(p.name) })}</h2>
+        <p>${t('hello.intro', { mascot: t('app.mascot') })}</p>
+        <p>${t('hello.guide')}</p>
         <div class="modal-actions">
-          <button class="btn ghost" data-go="lessonIntro" data-arg="0">Gleich loslegen</button>
-          <button class="btn primary big" data-primary data-go="guide">📖 So geht's</button>
+          <button class="btn ghost" data-go="lessonIntro" data-arg="0">${t('hello.skip')}</button>
+          <button class="btn primary big" data-primary data-go="guide">${t('hello.toGuide')}</button>
         </div>`);
     },
 
@@ -265,30 +286,34 @@
     const ps = Object.values(BT.Store.data.profiles).sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
     main().innerHTML = `
       <section class="center-wrap">
+        <div class="lang-row">${App.langSwitchHtml()}</div>
         <div class="welcome">
           <div class="mascot bounce">🦉</div>
-          <h1>Willkommen beim BlindTrainer!</h1>
-          <p class="lead">Lerne das 10-Finger-System – Schritt für Schritt, mit Spielen, Sternen und Abzeichen.</p>
+          <h1>${t('welcome.title')}</h1>
+          <p class="lead">${t('welcome.lead')}</p>
         </div>
-        <h2 class="section-title">Wer übt heute?</h2>
+        <h2 class="section-title">${t('welcome.who')}</h2>
         <div class="profile-grid">
-          ${ps.map((p) => {
-            const lv = Pr.levelInfo(p.xp);
-            return `<button class="profile-card" data-pid="${p.id}">
-                <span class="av">${p.avatar}</span>
+          ${ps.map((p) => `<button class="profile-card" data-pid="${esc(p.id)}">
+                <span class="av">${esc(p.avatar)}</span>
                 <span class="pname">${esc(p.name)}</span>
-                <span class="psub">Level ${lv.level} · ⭐ ${Pr.totalStars(p)}</span>
-              </button>`;
-          }).join('')}
-          <button class="profile-card new" id="new-profile"><span class="av">＋</span><span class="pname">Neues Profil</span><span class="psub">Für jedes Kind eins</span></button>
+                <span class="psub">${t('welcome.profileSub', { level: Pr.levelFromXp(p.xp), stars: Object.values(p.lessons).reduce((s, r) => s + r.stars, 0) })}</span>
+              </button>`).join('')}
+          <button class="profile-card new" id="new-profile"><span class="av">＋</span><span class="pname">${t('welcome.newProfile')}</span><span class="psub">${t('welcome.newProfileSub')}</span></button>
         </div>
-        <p class="footnote">Alle Daten bleiben auf diesem Computer. Es wird nichts ins Internet geschickt.</p>
+        <p class="footnote">${t('welcome.privacy')}</p>
       </section>`;
+    App.bindLangSwitch(main());
     $$('.profile-card[data-pid]').forEach((b) => {
-      b.onclick = () => { BT.Store.activate(b.dataset.pid); App.applySettings(); App.go('home'); };
+      b.onclick = () => {
+        BT.Store.activate(b.dataset.pid);
+        BT.setLang(BT.Store.currentLang());
+        App.applySettings();
+        App.go('home');
+      };
     });
     $('#new-profile').onclick = () => App.newProfileModal();
-    if (!ps.length) setTimeout(() => App.newProfileModal(), 200);
+    if (!ps.length) setTimeout(() => { if (App.current === 'profiles' && !App.modalOpen) App.newProfileModal(); }, 200);
   };
 
   function ring(frac) {
@@ -301,7 +326,10 @@
     </svg>`;
   }
 
-  const tile = (go, icon, title, sub) => `<button class="tile" data-go="${go}"><span class="tile-ic">${icon}</span><span class="tile-t">${title}</span><span class="tile-s">${sub}</span></button>`;
+  const tile = (go, icon, params) => {
+    const [title, sub] = t('tile.' + go);
+    return `<button class="tile" data-go="${go}"><span class="tile-ic">${icon}</span><span class="tile-t">${title}</span><span class="tile-s">${BT.tpl(sub, params)}</span></button>`;
+  };
 
   S.home = () => {
     const p = P();
@@ -311,13 +339,14 @@
     const goalMin = p.settings.dailyGoal;
     const min = today.sec / 60;
     const streak = Pr.streak(p);
-    const isNew = !Object.keys(p.lessons).length;
+    const isNew = !BT.LESSONS.some((_, i) => Pr.rec(p, i));
     const achCount = Object.keys(p.achievements).length;
     const L = next !== null ? BT.LESSONS[next] : null;
+    const name = esc(p.name);
     let msg;
-    if (isNew && !p.flags.guideDone) msg = `Hallo <b>${esc(p.name)}</b>! Schön, dass du da bist. Schau dir zuerst <b>„So geht's“</b> an – dann starten wir mit Lektion 1!`;
-    else if (next === null) msg = `Wow, <b>${esc(p.name)}</b>! Du hast alle Lektionen geschafft. Sammle jetzt alle Sterne oder fordere die Tiere im Rennen heraus!`;
-    else msg = `${pick(['Hallo', 'Hi', 'Hey', 'Schön, dich zu sehen'])}, <b>${esc(p.name)}</b>! <span class="tip">💡 ${pick(BT.TIPS)}</span>`;
+    if (isNew && !p.flags.guideDone) msg = t('home.hiNew', { name });
+    else if (next === null) msg = t('home.hiDone', { name });
+    else msg = `${t('home.hi', { greeting: pick(t('home.greetings')), name })} <span class="tip">💡 ${pick(BT.TIPS)}</span>`;
 
     main().innerHTML = `
       <section class="home">
@@ -327,16 +356,16 @@
             <div class="hero-body">
               <div class="bubble">${msg}</div>
               <div class="hero-actions">
-                ${L ? `<button class="btn primary big" data-go="lessonIntro" data-arg="${next}" data-primary>▶ Lektion ${next + 1}: ${esc(L.title)}</button>`
-                    : '<button class="btn primary big" data-go="map" data-primary>🗺️ Zum Lernpfad</button>'}
-                ${isNew && !p.flags.guideDone ? '<button class="btn secondary big" data-go="guide">📖 So geht\'s</button>' : ''}
+                ${L ? `<button class="btn primary big" data-go="lessonIntro" data-arg="${next}" data-primary>${t('home.continue', { n: next + 1, title: esc(L.title) })}</button>`
+                    : `<button class="btn primary big" data-go="map" data-primary>${t('home.toMap')}</button>`}
+                ${isNew && !p.flags.guideDone ? `<button class="btn secondary big" data-go="guide">${t('home.guide')}</button>` : ''}
               </div>
             </div>
           </div>
           <div class="card goal-card">
             ${ring(min / goalMin)}
-            <div class="goal-text"><b>Tagesziel</b><span>${Math.floor(min)} von ${goalMin} Minuten</span></div>
-            <div class="goal-streak">🔥 <b>${streak}</b> ${streak === 1 ? 'Tag' : 'Tage'} in Folge</div>
+            <div class="goal-text"><b>${t('home.goal')}</b><span>${t('home.goalOf', { min: Math.floor(min), goal: goalMin })}</span></div>
+            <div class="goal-streak">${t('home.streak', { n: streak })}</div>
           </div>
         </div>
         <div class="card level-card">
@@ -344,18 +373,18 @@
           <div class="lv-body">
             <div class="lv-title">${esc(lv.title)}</div>
             <div class="xpbar big"><i style="width:${lv.pct}%"></i></div>
-            <div class="lv-sub">${int(lv.into)} / ${int(lv.need)} XP bis Level ${lv.level + 1}</div>
+            <div class="lv-sub">${t('home.xpTo', { into: int(lv.into), need: int(lv.need), next: lv.level + 1 })}</div>
           </div>
           <div class="lv-side"><span>⭐ ${Pr.totalStars(p)} / ${BT.LESSONS.length * 3}</span><span>🏆 ${achCount} / ${BT.ACHIEVEMENTS.length}</span></div>
         </div>
         <div class="tiles">
-          ${tile('map', '🗺️', 'Lernpfad', 'Alle Lektionen und Welten')}
-          ${tile('games', '🎮', 'Spiele', 'Tasten-Blitz, Wort-Regen, Tier-Rennen')}
-          ${tile('training', '🏋️', 'Training', 'Schwache Tasten gezielt üben')}
-          ${tile('guide', '📖', 'So geht\'s', 'Grundstellung & Profi-Tipps')}
-          ${tile('trophies', '🏆', 'Erfolge', `${achCount} von ${BT.ACHIEVEMENTS.length} Abzeichen`)}
-          ${tile('stats', '📊', 'Statistik', 'Wie schnell bist du?')}
-          ${tile('settings', '⚙️', 'Einstellungen', 'Ton, Anzeige, Eltern')}
+          ${tile('map', '🗺️')}
+          ${tile('games', '🎮')}
+          ${tile('training', '🏋️')}
+          ${tile('guide', '📖')}
+          ${tile('trophies', '🏆', { n: achCount, total: BT.ACHIEVEMENTS.length })}
+          ${tile('stats', '📊')}
+          ${tile('settings', '⚙️')}
         </div>
       </section>`;
   };
@@ -376,7 +405,7 @@
     };
     main().innerHTML = `
       <section class="map">
-        <div class="page-head"><h1>🗺️ Lernpfad</h1><p>Schaffe jede Lektion mit mindestens einem Stern, um die nächste freizuschalten.</p></div>
+        <div class="page-head"><h1>${t('map.title')}</h1><p>${t('map.lead')}</p></div>
         ${BT.WORLDS.map((w) => {
           const ls = BT.LESSONS.map((L, i) => ({ L, i })).filter((x) => x.L.world === w.id);
           const got = ls.reduce((s, x) => s + Pr.stars(p, x.i), 0);
@@ -384,7 +413,7 @@
           return `<div class="card world${locked ? ' locked' : ''}" style="--wc:${w.color}">
               <div class="world-head">
                 <span class="world-icon">${w.icon}</span>
-                <div class="world-name"><h2>${w.name}</h2><p>${w.desc}</p></div>
+                <div class="world-name"><h2>${esc(w.name)}</h2><p>${esc(w.desc)}</p></div>
                 <span class="world-stars">⭐ ${got} / ${ls.length * 3}</span>
               </div>
               <div class="path">${ls.map(({ L, i }) => node(L, i)).join('')}</div>
@@ -395,7 +424,7 @@
       n.onclick = () => {
         const i = Number(n.dataset.i);
         if (!Pr.isUnlocked(p, i)) {
-          App.toast('🔒 Schaffe zuerst die Lektion davor!');
+          App.toast(t('toast.prevLesson'));
           n.classList.remove('shake'); void n.offsetWidth; n.classList.add('shake');
           BT.Sound.error();
           return;
@@ -408,9 +437,10 @@
   };
 
   /* ---------- Lektion: Einführung ---------- */
+  const ALL_FINGERS = ['LP', 'LR', 'LM', 'LI', 'RI', 'RM', 'RR', 'RP'];
   function lessonFingers(L) {
     if (L.type === 'shift') return ['LP', 'RP'];
-    if (L.type === 'numbers' || L.type === 'sentences') return ['LP', 'LR', 'LM', 'LI', 'RI', 'RM', 'RR', 'RP'];
+    if (L.type === 'numbers' || L.type === 'sentences' || L.type === 'review') return ALL_FINGERS;
     const set = new Set();
     L.keys.forEach((k) => BT.fingersFor(k).forEach((f) => set.add(f)));
     return [...set];
@@ -419,18 +449,19 @@
   function keyInfo(L) {
     if (L.type === 'shift') {
       return [
-        '<li><span class="kcap fc-pinky">⇧</span><span>links: <b>linker kleiner Finger</b> – für Buchstaben der rechten Hand (H, J, K, L …)</span></li>',
-        '<li><span class="kcap fc-pinky">⇧</span><span>rechts: <b>rechter kleiner Finger</b> – für Buchstaben der linken Hand (A, S, D, F …)</span></li>',
+        `<li><span class="kcap fc-pinky">⇧</span><span>${t('intro.shiftLeft', { finger: BT.FINGERS.LP.name })}</span></li>`,
+        `<li><span class="kcap fc-pinky">⇧</span><span>${t('intro.shiftRight', { finger: BT.FINGERS.RP.name })}</span></li>`,
       ];
     }
-    if (L.type === 'sentences') return ['<li>🏆 Alle Buchstaben, Satzzeichen und Großschreibung</li>'];
+    if (L.type === 'sentences' || L.type === 'review') return [`<li>${t('intro.allKeys')}</li>`];
     return L.keys.map((k) => {
       const m = BT.CHAR_MAP[k];
       const f = BT.FINGERS[m.key.finger];
-      const name = BT.KEY_NAMES[k] ? ` <small>(${BT.KEY_NAMES[k]})</small>` : '';
+      const name = BT.KEY_NAMES[k] ? ` <small>(${esc(BT.KEY_NAMES[k])})</small>` : '';
       if (m.shift) {
         const sf = BT.FINGERS[BT.shiftFor(m.key).finger];
-        return `<li><span class="kcap fc-${f.type}">${esc(k)}</span><span>${name} = ⇧ + ${esc(BT.keyLabel(m.key.base))} – <b>${f.name}</b>, ⇧ mit dem ${sf.dat}</span></li>`;
+        const combo = t('intro.shiftCombo', { base: esc(BT.keyLabel(m.key.base)), finger: f.name, withShift: t('finger.with', { f: sf.dat }) });
+        return `<li><span class="kcap fc-${f.type}">${esc(k)}</span><span>${name} ${combo}</span></li>`;
       }
       return `<li><span class="kcap fc-${f.type}">${esc(BT.keyLabel(k))}</span><span><b>${f.name}</b>${name}</span></li>`;
     });
@@ -441,21 +472,21 @@
     idx = Number(idx) || 0;
     const L = BT.LESSONS[idx];
     if (!L) return App.go('map');
-    if (!Pr.isUnlocked(p, idx)) { App.toast('🔒 Diese Lektion ist noch gesperrt.'); return App.go('map'); }
+    if (!Pr.isUnlocked(p, idx)) { App.toast(t('toast.lessonLocked')); return App.go('map'); }
     const w = BT.WORLDS[L.world];
-    const rec = p.lessons[idx];
+    const rec = Pr.rec(p, idx);
     const target = Pr.speedTarget(idx);
-    const big = L.type === 'shift' ? ['⇧'] : (L.type === 'sentences' ? ['Aa', '!?'] : L.keys.map(BT.keyLabel));
+    const big = L.type === 'shift' ? ['⇧'] : (L.type === 'sentences' ? ['Aa', '!?'] : (L.type === 'review' ? ['A–Z'] : L.keys.map(BT.keyLabel)));
     main().innerHTML = `
       <section class="lesson-intro">
         <div class="sub-head">
-          <button class="btn ghost" data-go="map">← Lernpfad</button>
-          <span class="world-tag" style="--wc:${w.color}">${w.icon} ${w.name} · Lektion ${idx + 1} von ${BT.LESSONS.length}</span>
-          ${rec ? `<span class="best">Bisher: ${starsHtml(rec.stars)}</span>` : ''}
+          <button class="btn ghost" data-go="map">${t('intro.back')}</button>
+          <span class="world-tag" style="--wc:${w.color}">${w.icon} ${t('intro.tag', { world: esc(w.name), n: idx + 1, total: BT.LESSONS.length })}</span>
+          ${rec ? `<span class="best">${t('intro.best')} ${starsHtml(rec.stars)}</span>` : ''}
         </div>
         <div class="card intro-card">
           <div class="intro-top">
-            <div class="bigkeys${big.length > 3 ? ' many' : ''}">${big.map((b) => `<span class="bigkey">${esc(b)}</span>`).join('')}</div>
+            <div class="bigkeys${big.length > 3 ? ' many' : ''}">${big.map((b) => `<span class="bigkey${b.length > 2 ? ' wide' : ''}">${esc(b)}</span>`).join('')}</div>
             <div class="intro-text">
               <h1>${esc(L.title)}</h1>
               <p>${L.intro}</p>
@@ -463,16 +494,16 @@
             </div>
           </div>
           <div class="intro-visual"><div class="intro-kb"></div><div class="intro-hands"></div></div>
-          <div class="try-line">⌨️ Probier es aus: Drück die neuen Tasten auf deiner Tastatur!</div>
+          <div class="try-line">${t('intro.try')}</div>
           <div class="intro-bottom">
             <div class="mascot-tip"><span class="mascot">🦉</span><div class="bubble small">${L.tip}</div></div>
             <div class="intro-go">
               <div class="star-req">
-                <span>${starsHtml(1)} ab 80 % richtig</span>
-                <span>${starsHtml(2)} ab 90 %</span>
-                <span>${starsHtml(3)} ab 96 % und ${target} Zeichen/Min.</span>
+                <span>${starsHtml(1)} ${t('intro.star1')}</span>
+                <span>${starsHtml(2)} ${t('intro.star2')}</span>
+                <span>${starsHtml(3)} ${t('intro.star3', { zpm: target })}</span>
               </div>
-              <button class="btn primary big" id="start-lesson" data-primary>Los geht's! <kbd>Enter</kbd></button>
+              <button class="btn primary big" id="start-lesson" data-primary>${t('intro.start')} <kbd>Enter</kbd></button>
             </div>
           </div>
         </div>
@@ -485,7 +516,7 @@
     $('#start-lesson').onclick = () => App.startLesson(idx);
     const tryLine = $('.try-line');
     const newChars = new Set(L.keys);
-    let t = null;
+    let timer = null;
     App.keyHandler = (e) => {
       const ch = BT.keyChar(e);
       if (ch === null) return false;
@@ -494,32 +525,32 @@
       if (!m) return true;
       kb.flash(ch, true);
       hands.highlight(BT.fingersFor(ch));
-      const label = ch === ' ' ? 'die Leertaste' : `<span class="kcap">${esc(ch)}</span>`;
-      tryLine.innerHTML = (newChars.has(ch) ? '👍 Super! Das war ' : 'Das war ') + label + ' – ' + BT.fingerText(ch);
-      clearTimeout(t);
-      t = setTimeout(() => hands.highlight(base), 1400);
+      const key = ch === ' ' ? t('intro.spaceKey') : `<span class="kcap">${esc(ch)}</span>`;
+      tryLine.innerHTML = t(newChars.has(ch) ? 'intro.tryNew' : 'intro.tryOther', { key, finger: BT.fingerText(ch) });
+      clearTimeout(timer);
+      timer = setTimeout(() => hands.highlight(base), 1400);
       return true;
     };
-    App.cleanup = () => clearTimeout(t);
+    App.cleanup = () => clearTimeout(timer);
   };
 
   /* ---------- Lektion: Runde ---------- */
   S.lessonRound = (idx, r, state) => {
     if (!state) return App.startLesson(idx);
     const L = BT.LESSONS[idx];
-    const t = state.texts[r];
+    const tx = state.texts[r];
     if (P().settings.showKeyboard) state.blind = false;
     BT.TypingScreen({
-      title: `Lektion ${idx + 1}: ${esc(L.title)}`,
-      sub: `Runde ${r + 1} von 3 · ${esc(t.label)}`,
+      title: t('round.title', { n: idx + 1, title: esc(L.title) }),
+      sub: t('round.sub', { r: r + 1, label: esc(tx.label) }),
       dots: { total: 3, current: r },
-      text: t.text,
+      text: tx.text,
       onKbToggle: (shown) => { if (shown) state.blind = false; },
       onExit: () => App.go('lessonIntro', idx),
       onRestart: () => App.go('lessonRound', idx, r, state),
       onDone: (res) => {
         state.rounds.push(res);
-        Pr.recordRound(P(), res, { kind: 'lesson', label: `Lektion ${idx + 1} · Runde ${r + 1}` });
+        Pr.recordRound(P(), res, { kind: 'lesson', l: idx + 1, r: r + 1 });
         App.keyHandler = (e) => { if (BT.keyChar(e) !== null) e.preventDefault(); return true; };
         if (r === 2) {
           setTimeout(() => {
@@ -533,10 +564,10 @@
           App.modal(`
             <div class="round-done">
               <div class="big-emoji">${res.wrong === 0 ? '💯' : '🎯'}</div>
-              <h2>Runde ${r + 1} geschafft!</h2>
-              <div class="rstats">${rstat(pct(res.acc), 'richtig')}${rstat(Math.round(res.zpm), 'Zeichen/Min')}${rstat(res.wrong, 'Fehler')}</div>
+              <h2>${t('round.done', { r: r + 1 })}</h2>
+              <div class="rstats">${rstat(pct(res.acc), t('stat.correct'))}${rstat(Math.round(res.zpm), t('stat.zpm'))}${rstat(res.wrong, t('stat.errors'))}</div>
               <p class="praise">${Pr.praise(res.acc)}</p>
-              <div class="modal-actions"><button class="btn primary big" data-primary id="next-round">Weiter zu Runde ${r + 2} <kbd>Enter</kbd></button></div>
+              <div class="modal-actions"><button class="btn primary big" data-primary id="next-round">${t('round.next', { r: r + 2 })} <kbd>Enter</kbd></button></div>
             </div>`, { closable: false, delay: 500 });
           $('#next-round').onclick = () => App.go('lessonRound', idx, r + 1, state);
         }, 300);
@@ -550,36 +581,36 @@
     const L = BT.LESSONS[s.idx];
     const hasNext = s.idx + 1 < BT.LESSONS.length;
     const lv = Pr.levelInfo(P().xp);
-    const head = s.passed ? (s.stars === 3 ? 'Perfekt!' : 'Lektion geschafft!') : 'Fast geschafft!';
+    const head = s.passed ? (s.stars === 3 ? t('result.perfect') : t('result.passed')) : t('result.failed');
     let msg;
-    if (!s.passed) msg = 'Für einen Stern brauchst du mindestens 80 % richtige Anschläge. Tipp: Tippe etwas langsamer und schau auf den Bildschirm – du schaffst das!';
-    else if (s.stars < 3 && s.acc >= 0.96) msg = `Super genau! Für den dritten Stern brauchst du noch etwas mehr Tempo: ${Pr.speedTarget(s.idx)} Zeichen pro Minute.`;
-    else if (s.stars < 3) msg = `${Pr.praise(s.acc)} Für mehr Sterne: noch genauer tippen!`;
+    if (!s.passed) msg = t('result.fail');
+    else if (s.stars < 3 && s.acc >= 0.96) msg = t('result.needSpeed', { zpm: Pr.speedTarget(s.idx) });
+    else if (s.stars < 3) msg = t('result.moreAcc', { praise: Pr.praise(s.acc) });
     else msg = Pr.praise(s.acc);
     let actions;
     if (s.passed && hasNext) {
-      actions = `<button class="btn secondary" id="again">↻ Nochmal</button>
-        <button class="btn primary big" data-primary data-go="lessonIntro" data-arg="${s.idx + 1}">Nächste Lektion ▶</button>
-        <button class="btn ghost" data-go="map">🗺️ Lernpfad</button>`;
+      actions = `<button class="btn secondary" id="again">${t('result.again')}</button>
+        <button class="btn primary big" data-primary data-go="lessonIntro" data-arg="${s.idx + 1}">${t('result.next')}</button>
+        <button class="btn ghost" data-go="map">${t('result.map')}</button>`;
     } else if (s.passed) {
-      actions = `<button class="btn secondary" id="again">↻ Nochmal</button>
-        <button class="btn primary big" data-primary data-go="map">🗺️ Lernpfad</button>`;
+      actions = `<button class="btn secondary" id="again">${t('result.again')}</button>
+        <button class="btn primary big" data-primary data-go="map">${t('result.map')}</button>`;
     } else {
-      actions = `<button class="btn primary big" data-primary id="again">↻ Nochmal versuchen</button>
-        <button class="btn ghost" data-go="map">🗺️ Lernpfad</button>`;
+      actions = `<button class="btn primary big" data-primary id="again">${t('result.retry')}</button>
+        <button class="btn ghost" data-go="map">${t('result.map')}</button>`;
     }
     main().innerHTML = `
       <section class="result">
         <div class="card result-card ${s.passed ? 'win' : 'fail'}">
           <div class="result-mascot ${s.passed ? 'bounce' : ''}">${s.passed ? '🦉' : '💪'}</div>
           <h1>${head}</h1>
-          <p class="result-sub">Lektion ${s.idx + 1}: ${esc(L.title)}</p>
+          <p class="result-sub">${t('round.title', { n: s.idx + 1, title: esc(L.title) })}</p>
           <div class="stars-big">${[0, 1, 2].map((i) => `<span class="sb" data-i="${i}">★</span>`).join('')}</div>
-          <div class="rstats">${rstat(pct(s.acc), 'richtig')}${rstat(Math.round(s.zpm), 'Zeichen/Min')}${rstat(s.wrong, 'Fehler')}</div>
+          <div class="rstats">${rstat(pct(s.acc), t('stat.correct'))}${rstat(Math.round(s.zpm), t('stat.zpm'))}${rstat(s.wrong, t('stat.errors'))}</div>
           <p class="praise">${msg}</p>
-          <div class="xp-gain">+${int(s.xp)} XP ${s.blind ? '<span class="tag">🙈 Blind-Bonus +25 %</span>' : ''}${s.firstPass ? '<span class="tag">🆕 Erstes Mal geschafft</span>' : ''}</div>
+          <div class="xp-gain">+${int(s.xp)} XP ${s.blind ? `<span class="tag">${t('result.blind')}</span>` : ''}${s.firstPass ? `<span class="tag">${t('result.first')}</span>` : ''}</div>
           <div class="xpbar big"><i style="width:${lv.pct}%"></i></div>
-          <div class="lv-sub">Level ${lv.level} · ${esc(lv.title)} · ${int(lv.into)} / ${int(lv.need)} XP</div>
+          <div class="lv-sub">${t('result.level', { level: lv.level, title: esc(lv.title), into: int(lv.into), need: int(lv.need) })}</div>
           <div class="result-actions">${actions}</div>
           ${App.rewardsHtml(s)}
         </div>

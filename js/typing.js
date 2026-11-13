@@ -2,6 +2,7 @@
 /* BlindTrainer – Tipp-Engine und Tipp-Ansicht */
 (function (BT) {
   const esc = BT.esc;
+  const t = (k, p) => BT.t(k, p);
 
   /* Tastatur-Ereignis -> getipptes Zeichen (oder null) */
   BT.keyChar = (e) => {
@@ -46,7 +47,7 @@
       this.combo = 0;
       return 'bad';
     }
-    get accuracy() { const t = this.pos + this.wrong; return t ? this.pos / t : 1; }
+    get accuracy() { const n = this.pos + this.wrong; return n ? this.pos / n : 1; }
     get zpm() {
       if (this.active < 1000 || this.pos < 2) return 0;
       return (this.pos - 1) / (this.active / 60000);
@@ -57,32 +58,28 @@
     }
   };
 
-  /* Welcher Finger? Als kurzer Satzteil, z. B. „mit dem linken Zeigefinger“ */
+  /* Welcher Finger? Als Satzteil, z. B. „mit dem linken Zeigefinger“ / „with your left index finger“ */
   BT.fingerText = (ch) => {
     const m = BT.CHAR_MAP[ch];
     if (!m) return '';
-    if (ch === ' ') return 'mit dem Daumen';
+    if (ch === ' ') return t('finger.with', { f: BT.FINGERS.TH.dat });
     const f = BT.FINGERS[m.key.finger];
     if (m.shift) {
       const sf = BT.FINGERS[BT.shiftFor(m.key).finger];
-      return `⇧ mit dem ${sf.dat} halten, ${esc(BT.keyLabel(m.key.base))} mit dem ${f.dat}`;
+      return t('finger.shiftHint', { ws: t('finger.with', { f: sf.dat }), key: esc(BT.keyLabel(m.key.base)), wf: t('finger.with', { f: f.dat }) });
     }
-    return `mit dem ${f.dat}`;
+    return t('finger.with', { f: f.dat });
   };
 
   /* Hinweis, welcher Finger die nächste Taste drückt */
   BT.hintHtml = (ch) => {
     const m = BT.CHAR_MAP[ch];
     if (!m) return '';
-    if (ch === ' ') return '<span class="kcap wide fc-thumb">Leertaste</span> mit dem Daumen';
+    if (ch === ' ') return `<span class="kcap wide fc-thumb">${esc(t('key.space'))}</span> ${BT.fingerText(ch)}`;
     const f = BT.FINGERS[m.key.finger];
-    const label = esc(BT.keyLabel(m.key.base));
-    const cap = `<span class="kcap fc-${f.type}">${label}</span>`;
-    if (m.shift) {
-      const sf = BT.FINGERS[BT.shiftFor(m.key).finger];
-      return `<span class="kcap fc-pinky">⇧</span> + ${cap} <span class="hint-sep">·</span> ⇧ mit dem ${sf.dat} halten, ${label} mit dem ${f.dat}`;
-    }
-    return `${cap} mit dem ${f.dat}`;
+    const cap = `<span class="kcap fc-${f.type}">${esc(BT.keyLabel(m.key.base))}</span>`;
+    if (m.shift) return `<span class="kcap fc-pinky">⇧</span> + ${cap} <span class="hint-sep">·</span> ${BT.fingerText(ch)}`;
+    return `${cap} ${BT.fingerText(ch)}`;
   };
 
   /* ---------- Ansicht: Text, Statistik, Tastatur, Hände ---------- */
@@ -96,20 +93,20 @@
           <div class="tv-bar">
             <div class="progress"><i></i></div>
             <div class="tv-chips">
-              <span class="chip" title="Genauigkeit">🎯 <b data-s="acc">100 %</b></span>
-              <span class="chip" title="Zeichen pro Minute">⚡ <b data-s="zpm">0</b> <small>Zeichen/Min</small></span>
-              <span class="chip combo" title="Richtige Tasten am Stück">🔥 <b data-s="combo">0</b></span>
+              <span class="chip" title="${esc(t('tv.acc'))}">🎯 <b data-s="acc">100 %</b></span>
+              <span class="chip" title="${esc(t('tv.zpm'))}">⚡ <b data-s="zpm">0</b> <small>${t('tv.zpmUnit')}</small></span>
+              <span class="chip combo" title="${esc(t('tv.combo'))}">🔥 <b data-s="combo">0</b></span>
               <button class="chip chip-btn" data-act="kb"></button>
             </div>
           </div>
-          <div class="caps-warn" hidden>⚠️ Die Feststelltaste <b>⇪</b> ist an! Drück sie einmal, um sie auszuschalten.</div>
+          <div class="caps-warn" hidden>${t('tv.caps')}</div>
           <div class="textbox"><div class="text">${chars.map((c) => `<span class="ch${c === ' ' ? ' sp' : ''}">${c === ' ' ? ' ' : esc(c)}</span>`).join('')}</div><div class="combo-pop"></div></div>
           <div class="tv-hint"${st.showHint ? '' : ' hidden'}></div>
           <div class="tv-kbwrap"${st.showKeyboard ? '' : ' hidden'}>
             <div class="tv-kb"></div>
             <div class="tv-hands"${st.showHands ? '' : ' hidden'}></div>
           </div>
-          <div class="tv-blindnote"${st.showKeyboard ? ' hidden' : ''}>🙈 <b>Profi-Modus:</b> Die Bildschirm-Tastatur ist ausgeblendet – in Lektionen gibt es dafür +25 % XP.</div>
+          <div class="tv-blindnote"${st.showKeyboard ? ' hidden' : ''}>${t('tv.blind')}</div>
         </div>`;
       const root = container.firstElementChild;
       const q = (s) => root.querySelector(s);
@@ -132,8 +129,8 @@
       let lastTop = -1;
 
       function syncKbButton() {
-        kbBtn.textContent = st.showKeyboard ? '🙈 Tastatur aus' : '👀 Tastatur an';
-        kbBtn.title = st.showKeyboard ? 'Bildschirm-Tastatur ausblenden (Profi-Modus, +25 % XP in Lektionen)' : 'Bildschirm-Tastatur wieder einblenden';
+        kbBtn.textContent = st.showKeyboard ? t('tv.kbOff') : t('tv.kbOn');
+        kbBtn.title = st.showKeyboard ? t('tv.kbOffTitle') : t('tv.kbOnTitle');
         blindNote.hidden = st.showKeyboard;
       }
       kbBtn.addEventListener('click', () => {
@@ -170,12 +167,12 @@
         const next = typer.done ? null : chars[pos];
         kb.highlight(next);
         hands.highlight(next != null ? BT.fingersFor(next) : []);
-        hintEl.innerHTML = next != null ? BT.hintHtml(next) : '✅ Geschafft!';
+        hintEl.innerHTML = next != null ? BT.hintHtml(next) : t('tv.done');
         scrollToCur();
       }
 
       function showCombo(n) {
-        comboPop.textContent = `🔥 ${n} am Stück!`;
+        comboPop.textContent = t('tv.comboPop', { n });
         comboPop.classList.remove('show');
         void comboPop.offsetWidth;
         comboPop.classList.add('show');
@@ -224,24 +221,24 @@
     main.innerHTML = `
       <section class="typing-screen">
         <div class="ts-head">
-          <button class="btn ghost" data-act="exit">✕ <span>Beenden</span></button>
+          <button class="btn ghost" data-act="exit">✕ <span>${t('ts.quit')}</span></button>
           <div class="ts-title"><h1>${o.title}</h1><div class="ts-sub">${o.sub || ''}</div></div>
-          <div class="ts-right">${dots}<button class="btn ghost" data-act="pause">⏸ <span>Pause</span></button></div>
+          <div class="ts-right">${dots}<button class="btn ghost" data-act="pause">⏸ <span>${t('ts.pause')}</span></button></div>
         </div>
         <div class="ts-view"></div>
-        <div class="ts-foot">Augen auf den Bildschirm, nicht auf die Finger! · <kbd>Esc</kbd> = Pause</div>
+        <div class="ts-foot">${t('ts.foot')} · <kbd>Esc</kbd> ${t('ts.escPause')}</div>
       </section>`;
     const view = BT.TypingView.create(main.querySelector('.ts-view'), o.text, { onDone: o.onDone, onKbToggle: o.onKbToggle });
 
     const pause = () => {
       const card = BT.App.modal(`
         <div class="big-emoji">⏸️</div>
-        <h2>Pause</h2>
-        <p>Kurz durchatmen und die Hände ausschütteln!</p>
+        <h2>${t('pause.title')}</h2>
+        <p>${t('pause.text')}</p>
         <div class="modal-actions col">
-          <button class="btn primary big" data-primary data-close>▶ Weiter <kbd>Enter</kbd></button>
-          ${o.onRestart ? '<button class="btn secondary" data-act="restart">↻ Runde neu starten</button>' : ''}
-          <button class="btn ghost" data-act="quit">✕ Beenden</button>
+          <button class="btn primary big" data-primary data-close>${t('pause.resume')} <kbd>Enter</kbd></button>
+          ${o.onRestart ? `<button class="btn secondary" data-act="restart">${t('pause.restart')}</button>` : ''}
+          <button class="btn ghost" data-act="quit">${t('pause.quit')}</button>
         </div>`);
       const rs = card.querySelector('[data-act=restart]');
       if (rs) rs.onclick = () => { BT.App.closeModal(); o.onRestart(); };

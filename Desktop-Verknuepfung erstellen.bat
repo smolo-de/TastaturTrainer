@@ -4,7 +4,7 @@ rem  Legt einmalig eine Verknuepfung "BlindTrainer" auf dem Desktop an.
 rem  Danach reicht ein Doppelklick auf das Symbol.
 rem ------------------------------------------------------------
 set "DIR=%~dp0"
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+powershell -NoProfile -NonInteractive -Command ^
   "$d=[Environment]::GetFolderPath('Desktop');" ^
   "$s=(New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $d 'BlindTrainer.lnk'));" ^
   "$s.TargetPath=$env:DIR + 'BlindTrainer starten.bat';" ^

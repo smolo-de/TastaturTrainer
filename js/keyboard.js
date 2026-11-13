@@ -4,7 +4,7 @@
   const LETTER = /^[a-zäöü]$/;
   const esc = BT.esc;
 
-  BT.keyLabel = (ch) => (ch === ' ' ? 'Leertaste' : (LETTER.test(ch) ? ch.toUpperCase() : ch));
+  BT.keyLabel = (ch) => (ch === ' ' ? BT.t('key.space') : (LETTER.test(ch) ? ch.toUpperCase() : ch));
 
   function keyHtml(k) {
     const f = k.finger ? BT.FINGERS[k.finger] : null;
@@ -12,7 +12,7 @@
     if (f) cls.push('fc-' + f.type);
     if (k.special) cls.push('mod');
     if (k.seg2) cls.push('seg2');
-    if (k.id === 'Enter' && !k.seg2) cls.push('seg1');
+    if (k.seg1) cls.push('seg1');
     if (k.id === 'Space') cls.push('space');
     if (k.base === 'f' || k.base === 'j') cls.push('bump');
     let inner;
@@ -124,8 +124,8 @@
       container.innerHTML = `<svg class="hands" viewBox="0 0 440 182" aria-hidden="true">
           <g>${shapes(['LP', 'LR', 'LM', 'LI', 'LT'])}</g>
           <g transform="translate(440 0) scale(-1 1)">${shapes(['RP', 'RR', 'RM', 'RI', 'RT'])}</g>
-          <text x="101" y="178" class="hand-label" text-anchor="middle">links</text>
-          <text x="339" y="178" class="hand-label" text-anchor="middle">rechts</text>
+          <text x="101" y="178" class="hand-label" text-anchor="middle">${BT.t('hands.left')}</text>
+          <text x="339" y="178" class="hand-label" text-anchor="middle">${BT.t('hands.right')}</text>
         </svg>`;
       const svg = container.firstElementChild;
       const els = {};

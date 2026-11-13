@@ -3,12 +3,13 @@
 (function (BT) {
   const VOW = new Set(['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü']);
   const LETTER = /^[a-zäöüß]$/;
-  const PUNCT = new Set([',', '.', '-']);
+  const PUNCT = new Set([',', '.', '-', ';', "'", '/']);
+  const WORDCHARS = /^[a-zäöüß]+$/;
   const rnd = (n) => Math.floor(Math.random() * n);
   const pick = (a) => a[rnd(a.length)];
   const randInt = (a, b) => a + rnd(b - a + 1);
   const isUpper = (w) => w[0] !== w[0].toLowerCase();
-  const BLOCK = /geil|sex|fick|arsch|kack|scheis|scheiß|hure|fotz|piss|nazi|nutt|wix|titt|penis|furz|doof|blöd|dumm|idiot|kotz/;
+  const BLOCK = /geil|sex|fick|arsch|kack|scheis|scheiß|hure|fotz|piss|nazi|nutt|wix|titt|penis|furz|doof|blöd|dumm|idiot|kotz|shit|fuck|damn|crap|dick|cock|cunt|bitch|slut|whore|nigg|fag|butt|kill|stupid|hate/;
 
   /* Gruppen aneinanderreihen, bis die Ziellänge erreicht ist (ohne direkte Wiederholung) */
   function fill(target, producer) {
@@ -71,7 +72,10 @@
     wordsFor(al) {
       const out = [];
       const seen = new Set();
+      /* Deutsch: Nomen vor der Großbuchstaben-Lektion klein üben. Englisch (keepCase): Eigennamen erst danach. */
+      const keepCase = BT.locale && BT.locale.meta.keepCase;
       for (const w of BT.WORDS) {
+        if (keepCase && !al.shift && isUpper(w)) continue;
         const cand = al.shift ? w : w.toLowerCase();
         if (seen.has(cand)) continue;
         if (G.canType(cand, al)) { seen.add(cand); out.push(cand); }
@@ -115,7 +119,9 @@
         const f = BT.CHAR_MAP[k] && BT.CHAR_MAP[k].key.finger;
         const home = BT.HOME[f];
         if (home && home !== k) return home;
-        return BT.FINGERS[f] && BT.FINGERS[f].hand === 'L' ? 'j' : 'f';
+        const left = BT.FINGERS[f] && BT.FINGERS[f].hand === 'L';
+        const idx = left ? 'f' : 'j';
+        return idx !== k ? idx : (left ? 'j' : 'f');
       };
       newKeys.forEach((k) => {
         const h = anchor(k);
@@ -155,10 +161,10 @@
     /* Runde 3: echte Wörter (oder Silben, wenn es noch zu wenige gibt) */
     words(al, newKeys, target) {
       const all = G.wordsFor(al);
-      const nl = newKeys.filter((k) => LETTER.test(k));
-      const punct = newKeys.filter((k) => PUNCT.has(k));
-      if (all.length < 6) return { label: 'Silben', text: G.mix(al, newKeys, target) };
-      const pri = nl.length ? all.filter((w) => nl.some((k) => w.toLowerCase().includes(k))) : all;
+      const punct = newKeys.filter((k) => PUNCT.has(k) && k !== "'");
+      if (all.length < 6) return { label: BT.t('round.syllables'), text: G.mix(al, newKeys, target) };
+      const focus = newKeys.filter((k) => LETTER.test(k) || k === "'");
+      const pri = focus.length ? all.filter((w) => focus.some((k) => w.toLowerCase().includes(k))) : all;
       const text = fill(target, () => {
         let w = (pri.length >= 3 && Math.random() < 0.75) ? pick(pri) : pick(all);
         if (punct.length && Math.random() < 0.35) {
@@ -167,7 +173,7 @@
         }
         return w;
       });
-      return { label: 'Wörter', text };
+      return { label: BT.t('round.words'), text };
     },
 
     sentences(al, target, prefer) {
@@ -221,31 +227,34 @@
       const L = BT.LESSONS[idx];
       const al = G.allowed(idx);
       const len = (r) => G.roundLen(idx, r);
+      const t = (k) => BT.t('round.' + k);
       switch (L.type) {
         case 'shift':
           return [
-            { label: 'Große Anfänge', text: G.capsShort(al, len(0)) },
-            { label: 'Nomen', text: G.nouns(al, len(1)) },
-            { label: 'Sätze', text: G.sentences(al, len(2)) },
+            { label: t('capitals'), text: G.capsShort(al, len(0)) },
+            { label: t('nouns'), text: G.nouns(al, len(1)) },
+            { label: t('sentences'), text: G.sentences(al, len(2)) },
           ];
         case 'punct':
           return [
-            { label: 'Satzzeichen', text: G.punctDrill(al, L.keys, len(0)) },
-            { label: 'Ausrufe & Fragen', text: G.punctWords(len(1)) },
-            { label: 'Sätze', text: G.sentences(al, len(2), (s) => /[!?:]/.test(s)) },
+            { label: t('punct'), text: G.punctDrill(al, L.keys, len(0)) },
+            { label: t('exclaim'), text: G.punctWords(len(1)) },
+            { label: t('sentences'), text: G.sentences(al, len(2), (s) => /[!?:]/.test(s)) },
           ];
         case 'numbers':
           return [
-            { label: 'Zahlen-Drill', text: G.digitDrill(len(0)) },
-            { label: 'Zahlen', text: G.numbers(len(1)) },
-            { label: 'Sätze mit Zahlen', text: G.numberSentences(len(2)) },
+            { label: t('digitDrill'), text: G.digitDrill(len(0)) },
+            { label: t('numbers'), text: G.numbers(len(1)) },
+            { label: t('numberSentences'), text: G.numberSentences(len(2)) },
           ];
         case 'sentences':
-          return [0, 1, 2].map((r) => ({ label: 'Sätze', text: G.sentences(al, len(r) + 10) }));
+          return [0, 1, 2].map((r) => ({ label: t('sentences'), text: G.sentences(al, len(r) + 10) }));
+        case 'review':
+          return [0, 1, 2].map((r) => G.words(al, [], len(r) + 10));
         default: {
           return [
-            { label: 'Neue Tasten', text: G.drill(L.keys, len(0)) },
-            { label: 'Buchstaben-Mix', text: G.mix(al, L.keys, len(1)) },
+            { label: t('newKeys'), text: G.drill(L.keys, len(0)) },
+            { label: t('mix'), text: G.mix(al, L.keys, len(1)) },
             G.words(al, L.keys, len(2)),
           ];
         }
@@ -281,7 +290,7 @@
     },
 
     rainPool(al) {
-      const words = G.wordsFor({ set: al.set, shift: false }).filter((w) => w.length >= 2 && LETTER.test(w[0]));
+      const words = G.wordsFor({ set: al.set, shift: false }).filter((w) => w.length >= 2 && WORDCHARS.test(w));
       if (words.length >= 10) return words;
       const letters = G.letters(al.set);
       const L = letters.length ? letters : ['f', 'j'];

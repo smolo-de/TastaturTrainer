@@ -1,12 +1,13 @@
 'use strict';
 /* BlindTrainer – Spiele: Tasten-Blitz, Wort-Regen, Tier-Rennen */
 (function (BT) {
-  const { $, $$, esc, pick, int, rstat, P } = BT.ui;
+  const { $, $$, esc, pick, int, rstat, P, t } = BT.ui;
   const S = BT.Screens;
   const App = BT.App;
   const Pr = BT.Progress;
   const main = () => $('#main');
   const allowedNow = (p) => BT.Gen.allowed(Pr.learnedIdx(p));
+  const gameName = (id) => t('games.' + id)[0];
 
   function gameOver(o) {
     const c = App.modal(`
@@ -14,14 +15,14 @@
       <h2>${o.title}</h2>
       ${o.sub ? `<p>${o.sub}</p>` : ''}
       <div class="rstats">${o.stats.map(([v, l]) => rstat(v, l)).join('')}</div>
-      ${o.res.record ? '<div class="reward record">🏅 Neuer Rekord!</div>' : ''}
+      ${o.res.record ? `<div class="reward record">${t('reward.record')}</div>` : ''}
       <div class="xp-gain">+${int(o.res.xp)} XP</div>
       ${App.rewardsHtml(o.res)}
       <div class="modal-actions">
-        <button class="btn ghost" data-go="${o.back || 'games'}">${o.backLabel || '← Spiele'}</button>
+        <button class="btn ghost" data-go="${o.back || 'games'}">${o.backLabel || t('games.back')}</button>
         ${o.next
-          ? `<button class="btn secondary" id="go-again">↻ Nochmal</button><button class="btn primary big" data-primary id="go-next">${o.next.label}</button>`
-          : '<button class="btn primary big" data-primary id="go-again">↻ Nochmal <kbd>Enter</kbd></button>'}
+          ? `<button class="btn secondary" id="go-again">${t('common.again')}</button><button class="btn primary big" data-primary id="go-next">${o.next.label}</button>`
+          : `<button class="btn primary big" data-primary id="go-again">${t('common.again')} <kbd>Enter</kbd></button>`}
       </div>`, { closable: false, delay: 800 });
     $('#go-again', c).onclick = o.onAgain;
     if (o.next) $('#go-next', c).onclick = o.next.fn;
@@ -32,23 +33,23 @@
   S.games = () => {
     const p = P();
     const best = (g) => {
-      if (g.id === 'blitz') return p.games.blitz ? `🏅 Rekord: ${int(p.games.blitz)} Punkte` : 'Noch kein Rekord';
-      if (g.id === 'rain') return p.games.rain ? `🏅 Rekord: ${int(p.games.rain)} Punkte` : 'Noch kein Rekord';
-      const n = BT.RACERS.filter((r) => p.games.race[r.id] > 0).length;
-      return `🏅 ${n} von ${BT.RACERS.length} Tieren besiegt`;
+      if (g.id === 'blitz') return p.games.blitz ? t('games.record', { n: int(p.games.blitz) }) : t('games.noRecord');
+      if (g.id === 'rain') return p.games.rain ? t('games.record', { n: int(p.games.rain) }) : t('games.noRecord');
+      return t('games.raceBeaten', { n: BT.RACERS.filter((r) => p.games.race[r.id] > 0).length, total: BT.RACERS.length });
     };
     main().innerHTML = `
       <section class="games">
-        <div class="page-head"><h1>🎮 Spiele</h1><p>Spielend üben! Die Spiele benutzen nur Tasten, die du schon gelernt hast.</p></div>
+        <div class="page-head"><h1>${t('games.title')}</h1><p>${t('games.lead')}</p></div>
         <div class="game-grid">${BT.GAMES.map((g) => {
           const unl = Pr.gameUnlocked(p, g);
+          const [name, desc] = t('games.' + g.id);
           return `<div class="card game-card${unl ? '' : ' locked'}">
               <div class="game-icon">${g.icon}</div>
-              <h2>${g.name}</h2>
-              <p>${g.desc}</p>
+              <h2>${name}</h2>
+              <p>${desc}</p>
               <div class="game-best">${best(g)}</div>
-              ${unl ? `<button class="btn primary big" data-go="${g.screen}">▶ Spielen</button>`
-                    : `<div class="lock-note">🔒 Schaffe Lektion ${g.unlockAfter}, um das Spiel freizuschalten</div>`}
+              ${unl ? `<button class="btn primary big" data-go="${g.screen}">${t('games.play')}</button>`
+                    : `<div class="lock-note">${t('games.lock', { n: g.unlockAfter })}</div>`}
             </div>`;
         }).join('')}</div>
       </section>`;
@@ -62,13 +63,13 @@
     main().innerHTML = `
       <section class="game blitz">
         <div class="sub-head">
-          <button class="btn ghost" data-go="games">← Spiele</button><h1>⚡ Tasten-Blitz</h1>
+          <button class="btn ghost" data-go="games">${t('games.back')}</button><h1>⚡ ${gameName('blitz')}</h1>
           <div class="game-stats"><span class="chip">⏱ <b id="bl-time">${D}</b> s</span><span class="chip">⭐ <b id="bl-score">0</b></span><span class="chip combo">🔥 <b id="bl-combo">0</b></span></div>
         </div>
         <div class="card blitz-stage">
           <div class="timebar"><i id="bl-bar"></i></div>
           <div class="blitz-letter" id="bl-letter">⚡</div>
-          <div class="blitz-msg" id="bl-msg">Drück so schnell wie möglich die Taste, die hier erscheint.<br>Wenn du zögerst, leuchtet sie zur Hilfe auf der Tastatur auf.<br><br><b>Bereit? Drück die <kbd>Leertaste</kbd>!</b></div>
+          <div class="blitz-msg" id="bl-msg">${t('blitz.intro')}</div>
         </div>
         <div class="game-kb" id="bl-kb"></div>
       </section>`;
@@ -112,7 +113,7 @@
     function play() {
       phase = 'play';
       endAt = performance.now() + D * 1000;
-      msg.textContent = 'Los!';
+      msg.textContent = t('blitz.go');
       nextChar();
       iv = setInterval(() => {
         const left = Math.max(0, endAt - performance.now());
@@ -132,7 +133,7 @@
       const res = Pr.gameResult(p, 'blitz', { score, hits, sec: D, keys: hits });
       BT.Sound.success();
       const acc = hits + misses ? hits / (hits + misses) : 1;
-      gameOver({ icon: '⚡', title: 'Zeit ist um!', stats: [[score, 'Punkte'], [hits, 'Treffer'], [Math.round(acc * 100) + ' %', 'richtig']], res, onAgain: () => App.go('blitz') });
+      gameOver({ icon: '⚡', title: t('blitz.over'), stats: [[score, t('stat.points')], [hits, t('stat.hits')], [Math.round(acc * 100) + ' %', t('stat.correct')]], res, onAgain: () => App.go('blitz') });
     }
 
     App.keyHandler = (e) => {
@@ -145,10 +146,11 @@
       if (ch === cur) {
         hits++;
         combo++;
-        score += 1 + Math.min(4, Math.floor(combo / 5));
+        const pts = 1 + Math.min(4, Math.floor(combo / 5));
+        score += pts;
         kb.flash(ch, true);
         BT.Sound.ok();
-        msg.textContent = combo >= 5 ? `🔥 ${combo} am Stück! +${1 + Math.min(4, Math.floor(combo / 5))} pro Treffer` : 'Weiter so!';
+        msg.textContent = combo >= 5 ? t('blitz.streak', { n: combo, p: pts }) : t('blitz.keepGoing');
         nextChar();
       } else {
         misses++;
@@ -156,7 +158,7 @@
         kb.flash(ch, false);
         BT.Sound.error();
         anim('shake');
-        msg.textContent = 'Ups – das war die falsche Taste.';
+        msg.textContent = t('blitz.wrong');
       }
       hud();
       return true;
@@ -172,7 +174,7 @@
     main().innerHTML = `
       <section class="game rain">
         <div class="sub-head">
-          <button class="btn ghost" data-go="games">← Spiele</button><h1>🌧️ Wort-Regen</h1>
+          <button class="btn ghost" data-go="games">${t('games.back')}</button><h1>🌧️ ${gameName('rain')}</h1>
           <div class="game-stats"><span class="chip" id="rn-hearts"></span><span class="chip">⭐ <b id="rn-score">0</b></span><span class="chip">Level <b id="rn-level">1</b></span></div>
         </div>
         <div class="rain-field" id="rn-field">
@@ -180,10 +182,10 @@
           <div class="rain-banner" id="rn-banner"></div>
           <div class="rain-overlay" id="rn-overlay">
             <div class="big-emoji">🌧️</div>
-            <h2>Wort-Regen</h2>
-            <p>Wörter fallen vom Himmel! Tippe sie ab, bevor sie den Boden berühren.<br>Fang einfach mit dem ersten Buchstaben an – das Wort wird dann markiert.</p>
-            <p>Du hast 3 Herzen. Nach jeweils 8 Wörtern steigt das Level.</p>
-            <p class="ov-keys"><kbd>Leertaste</kbd> Start · <kbd>Esc</kbd> Pause</p>
+            <h2>${gameName('rain')}</h2>
+            <p>${t('rain.text1')}</p>
+            <p>${t('rain.text2')}</p>
+            <p class="ov-keys">${t('rain.keys')}</p>
           </div>
         </div>
       </section>`;
@@ -216,7 +218,7 @@
       let cand = pool.filter((w) => w.length <= c.maxLen);
       if (cand.length < 6) cand = pool;
       let text = null;
-      for (let i = 0; i < 15; i++) { const t = pick(cand); if (!firsts.has(t[0])) { text = t; break; } }
+      for (let i = 0; i < 15; i++) { const x = pick(cand); if (!firsts.has(x[0])) { text = x; break; } }
       if (!text) return;
       const el = document.createElement('div');
       el.className = 'drop';
@@ -248,7 +250,7 @@
       score += w.text.length * 10 * level;
       cleared++;
       BT.Sound.pop();
-      if (cleared % 8 === 0) { level++; showBanner(`Level ${level}! 🚀`); BT.Sound.small(); }
+      if (cleared % 8 === 0) { level++; showBanner(t('rain.level', { n: level })); BT.Sound.small(); }
       hud();
     }
     function frame(ts) {
@@ -276,7 +278,7 @@
       if (phase !== 'play') return;
       phase = 'pause';
       cancelAnimationFrame(raf);
-      overlay.innerHTML = '<div class="big-emoji">⏸️</div><h2>Pause</h2><p class="ov-keys"><kbd>Leertaste</kbd> weiterspielen</p>';
+      overlay.innerHTML = `<div class="big-emoji">⏸️</div><h2>${t('pause.title')}</h2><p class="ov-keys">${t('rain.resume')}</p>`;
       overlay.hidden = false;
     }
     function over() {
@@ -284,8 +286,8 @@
       cancelAnimationFrame(raf);
       const res = Pr.gameResult(p, 'rain', { score, words: cleared, sec: playMs / 1000, keys });
       BT.Sound.lose();
-      gameOver({ icon: '🌧️', title: 'Game over!', sub: `Du hast ${cleared} ${cleared === 1 ? 'Wort' : 'Wörter'} geschafft.`,
-        stats: [[int(score), 'Punkte'], [cleared, 'Wörter'], [level, 'Level']], res, onAgain: () => App.go('rain') });
+      gameOver({ icon: '🌧️', title: t('rain.over'), sub: t('rain.sub', { n: cleared }),
+        stats: [[int(score), t('stat.points')], [cleared, t('stat.words')], [level, t('stat.level')]], res, onAgain: () => App.go('rain') });
     }
 
     App.keyHandler = (e) => {
@@ -338,16 +340,16 @@
     if (!Pr.gameUnlocked(p, BT.GAMES[2])) return App.go('games');
     main().innerHTML = `
       <section class="race-select">
-        <div class="sub-head"><button class="btn ghost" data-go="games">← Spiele</button><h1>🏁 Tier-Rennen</h1></div>
-        <p class="lead-sm">Wähle deinen Gegner! Jedes Tier tippt gleichmäßig schnell. Besiege ein Tier, um das nächste herauszufordern.</p>
+        <div class="sub-head"><button class="btn ghost" data-go="games">${t('games.back')}</button><h1>🏁 ${gameName('race')}</h1></div>
+        <p class="lead-sm">${t('race.lead')}</p>
         <div class="racer-grid">${BT.RACERS.map((r, i) => {
           const won = (p.games.race[r.id] || 0) > 0;
           const unl = racerUnlocked(p, i);
           return `<button class="card racer${won ? ' won' : ''}${unl ? '' : ' locked'}" data-i="${i}"${unl ? '' : ' disabled'}>
               <span class="racer-ic"><span class="flip">${r.icon}</span></span>
-              <b>${r.name}</b>
-              <span class="racer-speed">${r.zpm} Zeichen/Min</span>
-              <span class="racer-state">${won ? `🏅 Besiegt – dein Tempo: ${p.games.race[r.id]}` : (unl ? '⚔️ Herausfordern' : '🔒 Erst das Tier davor besiegen')}</span>
+              <b>${esc(Pr.racerName(r.id))}</b>
+              <span class="racer-speed">${t('race.speed', { n: r.zpm })}</span>
+              <span class="racer-state">${won ? t('race.beaten', { n: p.games.race[r.id] }) : (unl ? t('race.challenge') : t('race.locked'))}</span>
             </button>`;
         }).join('')}</div>
       </section>`;
@@ -360,14 +362,15 @@
     i = Math.max(0, Math.min(BT.RACERS.length - 1, Number(i) || 0));
     if (!racerUnlocked(p, i)) return App.go('raceSelect');
     const r = BT.RACERS[i];
+    const rName = esc(Pr.racerName(r.id));
     const text = BT.Gen.raceText(allowedNow(p), 70 + i * 12);
     main().innerHTML = `
       <section class="game race">
-        <div class="sub-head"><button class="btn ghost" data-go="raceSelect">← Gegner</button><h1>🏁 Tier-Rennen</h1><span class="chip">${r.icon} ${r.name} · ${r.zpm} Zeichen/Min</span></div>
+        <div class="sub-head"><button class="btn ghost" data-go="raceSelect">${t('race.back')}</button><h1>🏁 ${gameName('race')}</h1><span class="chip">${r.icon} ${rName} · ${t('race.speed', { n: r.zpm })}</span></div>
         <div class="card track">
-          <div class="lane"><span class="lane-label">${r.name}</span><span class="runner" id="rc-opp"><span class="flip">${r.icon}</span></span><span class="finish">🏁</span></div>
-          <div class="lane me"><span class="lane-label">${esc(p.name)}</span><span class="runner" id="rc-me">${p.avatar}</span><span class="finish">🏁</span></div>
-          <div class="countdown" id="rc-count"><span class="cd-text">Drück die <kbd>Leertaste</kbd> zum Starten!</span></div>
+          <div class="lane"><span class="lane-label">${rName}</span><span class="runner" id="rc-opp"><span class="flip">${r.icon}</span></span><span class="finish">🏁</span></div>
+          <div class="lane me"><span class="lane-label">${esc(p.name)}</span><span class="runner" id="rc-me">${esc(p.avatar)}</span><span class="finish">🏁</span></div>
+          <div class="countdown" id="rc-count"><span class="cd-text">${t('race.start')}</span></div>
         </div>
         <div id="rc-view"></div>
       </section>`;
@@ -404,7 +407,7 @@
           BT.Sound.tick();
           timers.push(setTimeout(step, 800));
         } else {
-          count.innerHTML = '<span class="cd-num go">LOS!</span>';
+          count.innerHTML = `<span class="cd-num go">${t('race.go')}</span>`;
           BT.Sound.go();
           phase = 'play';
           startAt = performance.now();
@@ -426,21 +429,21 @@
       const zpm = ms > 0 ? view.typer.pos / (ms / 60000) : 0;
       const tr = view.typer.result();
       App.keyHandler = (e) => { if (BT.keyChar(e) !== null) e.preventDefault(); return true; };
-      if (tr.correct > 0) Pr.recordRound(p, tr, { kind: 'race', label: `Rennen: ${r.name}` });
+      if (tr.correct > 0) Pr.recordRound(p, tr, { kind: 'race', id: r.id });
       const res = Pr.gameResult(p, 'race', { win, id: r.id, zpm, rank: i, sec: 0, keys: 0 });
       const nextR = BT.RACERS[i + 1];
       if (win) { BT.Sound.success(); App.confetti(); } else BT.Sound.lose();
-      setTimeout(() => gameOver({
+      timers.push(setTimeout(() => gameOver({
         icon: win ? '🏆' : r.icon,
-        title: win ? 'Gewonnen!' : 'Knapp verloren!',
-        sub: win ? `Du warst schneller als ${r.name}!` : `${r.name} war diesmal schneller. Übe weiter und versuch es nochmal!`,
-        stats: [[Math.round(zpm), 'dein Tempo'], [r.zpm, `Tempo ${r.icon}`], [Math.round(tr.acc * 100) + ' %', 'richtig']],
+        title: win ? t('race.win') : t('race.lose'),
+        sub: win ? t('race.winSub', { name: rName }) : t('race.loseSub', { name: rName }),
+        stats: [[Math.round(zpm), t('race.you')], [r.zpm, t('race.them', { icon: r.icon })], [Math.round(tr.acc * 100) + ' %', t('stat.correct')]],
         res,
         back: 'raceSelect',
-        backLabel: '← Gegner',
+        backLabel: t('race.back'),
         onAgain: () => App.go('race', i),
-        next: win && nextR ? { label: `Nächster Gegner: ${nextR.icon} ▶`, fn: () => App.go('race', i + 1) } : null,
-      }), 500);
+        next: win && nextR ? { label: t('race.next', { icon: nextR.icon }), fn: () => App.go('race', i + 1) } : null,
+      }), 500));
     }
 
     place(oppEl, 0);

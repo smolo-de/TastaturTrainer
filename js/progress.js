@@ -10,7 +10,12 @@
 
     /* ---------- Level ---------- */
     xpFor(n) { return 50 * n * (n - 1); },
-    levelFromXp(xp) { let lv = 1; while (xp >= Pr.xpFor(lv + 1)) lv++; return lv; },
+    levelFromXp(xp) {
+      const x = Math.max(0, Number(xp) || 0);
+      let lv = 1;
+      while (lv < 1000 && x >= Pr.xpFor(lv + 1)) lv++;
+      return lv;
+    },
     levelTitle(lv) { return BT.LEVEL_TITLES[Math.min(lv - 1, BT.LEVEL_TITLES.length - 1)]; },
     levelInfo(xp) {
       const level = Pr.levelFromXp(xp);
@@ -19,13 +24,15 @@
     },
     addXp(p, n) {
       const before = Pr.levelFromXp(p.xp);
-      p.xp += Math.max(0, Math.round(n));
+      p.xp = Math.min(10000000, p.xp + Math.max(0, Math.round(n)));
       const after = Pr.levelFromXp(p.xp);
       return { levelUp: after > before, level: after, newAvatars: BT.AVATARS.filter((a) => a.lvl > before && a.lvl <= after) };
     },
 
-    /* ---------- Lektionen ---------- */
-    stars(p, i) { return (p.lessons[i] && p.lessons[i].stars) || 0; },
+    /* ---------- Lektionen (Fortschritt pro Kurs/Layout) ---------- */
+    lkey(i) { return BT.COURSE_ID + ':' + BT.LESSONS[i].id; },
+    rec(p, i) { return p.lessons[Pr.lkey(i)] || null; },
+    stars(p, i) { const r = Pr.rec(p, i); return (r && r.stars) || 0; },
     totalStars(p) { return BT.LESSONS.reduce((s, _, i) => s + Pr.stars(p, i), 0); },
     isUnlocked(p, i) { return i === 0 || p.settings.unlockAll || Pr.stars(p, i - 1) >= 1; },
     nextLesson(p) {
@@ -49,6 +56,17 @@
     praise(acc) {
       const tier = BT.PRAISE.find((t) => acc >= t.min) || BT.PRAISE[BT.PRAISE.length - 1];
       return BT.Gen.pick(tier.texts);
+    },
+
+    /* ---------- Texte ---------- */
+    achTitle(a) { return (BT.locale.achievements[a.id] || [a.id])[0]; },
+    achDesc(a) { return (BT.locale.achievements[a.id] || ['', ''])[1]; },
+    racerName(id) { return BT.locale.racers[id] || id; },
+    histLabel(h) {
+      if (h.kind === 'lesson' && h.l) return BT.t('hist.lesson', { l: h.l, r: h.r || 1 });
+      if (h.kind === 'training' && h.k) return BT.t('hist.training', { name: BT.t('training.' + h.k) });
+      if (h.kind === 'race' && h.id) return BT.t('hist.race', { name: Pr.racerName(h.id) });
+      return h.label || '';
     },
 
     /* ---------- Tage, Serie, Tagesziel ---------- */
@@ -89,7 +107,7 @@
         ks.h += s.h; ks.e += s.e;
       });
       Pr.addTime(p, res.activeMs / 1000, res.correct);
-      p.history.push({ t: Date.now(), kind: meta.kind, label: meta.label, zpm: Math.round(res.zpm), acc: Math.round(res.acc * 1000) / 1000 });
+      p.history.push(Object.assign({ t: Date.now(), zpm: Math.round(res.zpm), acc: Math.round(res.acc * 1000) / 1000 }, meta));
       if (p.history.length > 100) p.history.splice(0, p.history.length - 100);
       BT.Store.save();
     },
@@ -101,14 +119,15 @@
       const acc = correct + wrong ? correct / (correct + wrong) : 1;
       const zpm = active > 1000 ? Math.max(0, correct - rounds.length) / (active / 60000) : 0;
       const stars = Pr.starsFor(idx, acc, zpm);
-      const rec = p.lessons[idx] || { stars: 0, bestZpm: 0, bestAcc: 0, plays: 0 };
+      const key = Pr.lkey(idx);
+      const rec = p.lessons[key] || { stars: 0, bestZpm: 0, bestAcc: 0, plays: 0 };
       const prevStars = rec.stars;
       const firstPass = prevStars === 0 && stars > 0;
       rec.plays++;
       rec.stars = Math.max(rec.stars, stars);
       rec.bestZpm = Math.max(rec.bestZpm, Math.round(zpm));
       rec.bestAcc = Math.max(rec.bestAcc, Math.round(acc * 1000) / 1000);
-      p.lessons[idx] = rec;
+      p.lessons[key] = rec;
 
       let xp = correct;
       if (stars > 0) xp += stars * 15;
@@ -195,38 +214,38 @@
     },
   };
 
-  /* ---------- Abzeichen ---------- */
+  /* ---------- Abzeichen (Texte stehen in der Sprachdatei) ---------- */
   const done = (p) => BT.LESSONS.filter((_, i) => Pr.stars(p, i) >= 1).length;
   const worldDone = (p, w) => BT.LESSONS.every((L, i) => L.world !== w || Pr.stars(p, i) >= 1);
-  const A = (id, icon, title, desc, check) => ({ id, icon, title, desc, check });
+  const A = (id, icon, check) => ({ id, icon, check });
 
   BT.ACHIEVEMENTS = [
-    A('first', '🎉', 'Erster Schritt', 'Schaffe deine erste Lektion.', (p) => done(p) >= 1),
-    A('guide', '📖', 'Gut vorbereitet', 'Lies „So geht\'s“ bis zum Ende und probiere die Grundstellung aus.', (p) => !!p.flags.guideDone),
-    A('world0', '🏝️', 'Insel erkundet', 'Schaffe alle Lektionen der Grundreihen-Insel.', (p) => worldDone(p, 0)),
-    A('world1', '🌳', 'Wald durchquert', 'Schaffe alle Lektionen im Zauberwald.', (p) => worldDone(p, 1)),
-    A('world2', '💎', 'Kristalle gefunden', 'Schaffe alle Lektionen der Kristallhöhle.', (p) => worldDone(p, 2)),
-    A('world3', '🐉', 'Drachen gezähmt', 'Schaffe alle Lektionen der Drachenburg.', (p) => worldDone(p, 3)),
-    A('perfect', '💯', 'Fehlerfrei!', 'Schaffe eine Runde ganz ohne Fehler.', (p) => p.totals.perfectRounds >= 1),
-    A('perfect10', '🎯', 'Volltreffer', 'Schaffe 10 fehlerfreie Runden.', (p) => p.totals.perfectRounds >= 10),
-    A('stars10', '⭐', '10 Sterne', 'Sammle 10 Sterne.', (p) => Pr.totalStars(p) >= 10),
-    A('stars30', '🌟', 'Sternenregen', 'Sammle 30 Sterne.', (p) => Pr.totalStars(p) >= 30),
-    A('starsAll', '✨', 'Superstar', 'Sammle alle Sterne aller Lektionen.', (p) => Pr.totalStars(p) >= BT.LESSONS.length * 3),
-    A('keys1k', '⌨️', 'Tausend Tasten', 'Tippe 1.000 Zeichen richtig.', (p) => p.totals.keys >= 1000),
-    A('keys10k', '🚀', 'Tasten-Rakete', 'Tippe 10.000 Zeichen richtig.', (p) => p.totals.keys >= 10000),
-    A('keys50k', '🌌', 'Tipp-Universum', 'Tippe 50.000 Zeichen richtig.', (p) => p.totals.keys >= 50000),
-    A('speed60', '🐇', 'Flinke Finger', 'Schaffe 60 Zeichen pro Minute in einer Runde.', (p) => p.totals.bestZpm >= 60),
-    A('speed100', '⚡', 'Blitzschnell', 'Schaffe 100 Zeichen pro Minute in einer Runde.', (p) => p.totals.bestZpm >= 100),
-    A('speed150', '🔥', 'Turbo-Finger', 'Schaffe 150 Zeichen pro Minute in einer Runde.', (p) => p.totals.bestZpm >= 150),
-    A('goal', '🥇', 'Tagesziel geschafft', 'Erreiche dein Tagesziel.', (p) => (p.totals.goalDays || 0) >= 1),
-    A('streak3', '📅', 'Drangeblieben', 'Übe an 3 Tagen hintereinander.', (p) => p.totals.bestStreak >= 3),
-    A('streak7', '🏅', 'Eine ganze Woche', 'Übe an 7 Tagen hintereinander.', (p) => p.totals.bestStreak >= 7),
-    A('blind', '🙈', 'Ohne Gucken', 'Schaffe eine Lektion mit ausgeblendeter Tastatur.', (p) => p.totals.blindLessons >= 1),
-    A('blitz', '💥', 'Blitz-Profi', 'Triff 50 Tasten im Tasten-Blitz.', (p) => p.games.blitzHits >= 50),
-    A('rain', '🌧️', 'Regenzauber', 'Erreiche 500 Punkte im Wort-Regen.', (p) => p.games.rain >= 500),
-    A('race1', '🏁', 'Erster Sieg', 'Gewinne ein Tier-Rennen.', (p) => Object.values(p.games.race).some((v) => v > 0)),
-    A('raceAll', '🏆', 'Gepard geschlagen', 'Gewinne das Tier-Rennen gegen den Geparden.', (p) => (p.games.race.cheetah || 0) > 0),
-    A('level5', '🎖️', 'Aufsteiger', 'Erreiche Level 5.', (p) => Pr.levelFromXp(p.xp) >= 5),
-    A('level10', '👑', 'Gekrönt', 'Erreiche Level 10.', (p) => Pr.levelFromXp(p.xp) >= 10),
+    A('first', '🎉', (p) => done(p) >= 1),
+    A('guide', '📖', (p) => !!p.flags.guideDone),
+    A('world0', '🏝️', (p) => worldDone(p, 0)),
+    A('world1', '🌳', (p) => worldDone(p, 1)),
+    A('world2', '💎', (p) => worldDone(p, 2)),
+    A('world3', '🐉', (p) => worldDone(p, 3)),
+    A('perfect', '💯', (p) => p.totals.perfectRounds >= 1),
+    A('perfect10', '🎯', (p) => p.totals.perfectRounds >= 10),
+    A('stars10', '⭐', (p) => Pr.totalStars(p) >= 10),
+    A('stars30', '🌟', (p) => Pr.totalStars(p) >= 30),
+    A('starsAll', '✨', (p) => Pr.totalStars(p) >= BT.LESSONS.length * 3),
+    A('keys1k', '⌨️', (p) => p.totals.keys >= 1000),
+    A('keys10k', '🚀', (p) => p.totals.keys >= 10000),
+    A('keys50k', '🌌', (p) => p.totals.keys >= 50000),
+    A('speed60', '🐇', (p) => p.totals.bestZpm >= 60),
+    A('speed100', '⚡', (p) => p.totals.bestZpm >= 100),
+    A('speed150', '🔥', (p) => p.totals.bestZpm >= 150),
+    A('goal', '🥇', (p) => (p.totals.goalDays || 0) >= 1),
+    A('streak3', '📅', (p) => p.totals.bestStreak >= 3),
+    A('streak7', '🏅', (p) => p.totals.bestStreak >= 7),
+    A('blind', '🙈', (p) => p.totals.blindLessons >= 1),
+    A('blitz', '💥', (p) => p.games.blitzHits >= 50),
+    A('rain', '🌧️', (p) => p.games.rain >= 500),
+    A('race1', '🏁', (p) => Object.values(p.games.race).some((v) => v > 0)),
+    A('raceAll', '🏆', (p) => (p.games.race.cheetah || 0) > 0),
+    A('level5', '🎖️', (p) => Pr.levelFromXp(p.xp) >= 5),
+    A('level10', '👑', (p) => Pr.levelFromXp(p.xp) >= 10),
   ];
 })(window.BT);
