@@ -306,39 +306,8 @@
   };
 
   /* =================== Einstellungen =================== */
-  function parentGate(onOk, onCancel) {
-    const a = 6 + Math.floor(Math.random() * 4);
-    const b = 6 + Math.floor(Math.random() * 4);
-    const card = App.modal(`
-      <div class="big-emoji">👪</div>
-      <h2>${t('settings.gateTitle')}</h2>
-      <p>${t('settings.gateText')}</p>
-      <label class="field center"><span class="gate-q">${a} × ${b} = ?</span><input id="gate" inputmode="numeric" maxlength="3" autocomplete="off"></label>
-      <div class="modal-actions"><button class="btn ghost" id="gate-no">${t('common.cancel')}</button><button class="btn primary" data-primary id="gate-ok">${t('common.ok')}</button></div>`, { closable: false });
-    const inp = $('#gate', card);
-    setTimeout(() => inp.focus(), 60);
-    const ok = () => {
-      if (Number(inp.value) === a * b) { App.closeModal(); onOk(); return; }
-      inp.value = '';
-      inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
-      inp.focus();
-    };
-    $('#gate-ok', card).onclick = ok;
-    inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); ok(); }
-      if (e.key === 'Escape') { App.closeModal(); if (onCancel) onCancel(); }
-    });
-    $('#gate-no', card).onclick = () => { App.closeModal(); if (onCancel) onCancel(); };
-  }
-
-  function confirmModal(title, text, okLabel, onOk) {
-    const card = App.modal(`
-      <div class="big-emoji">⚠️</div>
-      <h2>${title}</h2>
-      <p>${text}</p>
-      <div class="modal-actions"><button class="btn ghost" data-close>${t('common.cancel')}</button><button class="btn danger" id="cf-ok">${okLabel}</button></div>`);
-    $('#cf-ok', card).onclick = () => { App.closeModal(); onOk(); };
-  }
+  const parentGate = (ok, cancel) => App.parentGate(ok, cancel);
+  const confirmModal = (title, text, okLabel, onOk) => App.confirmModal(title, text, okLabel, onOk);
 
   S.settings = () => {
     const p = P();
@@ -350,6 +319,7 @@
       </label>`;
     const seg = (key, opts) => `<div class="seg" data-seg="${key}">${opts.map(([v, l]) => `<button class="${String(s[key]) === String(v) ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div>`;
     const name = esc(p.name);
+    const where = BT.Store.storageInfo();
     main().innerHTML = `
       <section class="settings">
         <div class="page-head"><h1>${t('settings.title')}</h1></div>
@@ -393,6 +363,7 @@
               <input type="file" id="set-file" accept=".json,application/json" hidden></div>
             <div class="set-row"><span class="set-l"><b>${t('settings.reset')}</b><small>${t('settings.resetDesc')}</small></span><button class="btn small danger" id="set-reset">${t('settings.resetBtn')}</button></div>
             <div class="set-row"><span class="set-l"><b>${t('settings.del')}</b><small>${t('settings.delDesc', { name })}</small></span><button class="btn small danger" id="set-delete">${t('settings.delBtn')}</button></div>
+            <div class="set-row"><span class="set-l"><b>${t('settings.storage')}</b><small class="storage-path">${where.kind === 'file' ? t('settings.storageFile', { path: esc(where.location) }) : t('settings.storageBrowser')}</small></span></div>
             <p class="footnote">${t('settings.footnote')}</p>
           </div>
         </div>

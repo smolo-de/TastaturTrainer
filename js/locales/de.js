@@ -12,6 +12,7 @@
       top: {
         home: 'Startseite', stars: 'Gesammelte Sterne', streak: 'Tage hintereinander geübt',
         level: '{title} – {into} von {need} XP', sound: 'Ton an/aus', switchProfile: 'Profil wechseln',
+        reset: 'Zurücksetzen', resetTitle: 'Ergebnisse zurücksetzen (Elternbereich)',
       },
       toast: {
         goal: '🥇 <b>Tagesziel erreicht!</b> Super, weiter so!',
@@ -25,6 +26,12 @@
         invalidBackup: '⚠️ Die Datei ist keine gültige Sicherung.',
         fileTooBig: '⚠️ Die Datei ist zu groß für eine Sicherung.',
         progressReset: 'Fortschritt zurückgesetzt',
+        allCleared: 'Alle Ergebnisse wurden gelöscht.',
+      },
+      reset: {
+        title: 'Zurücksetzen', text: 'Was soll gelöscht werden? Das lässt sich nicht rückgängig machen.',
+        fileHint: 'Die Ergebnisse liegen in dieser Datei: {path}',
+        profile: 'Nur den Fortschritt von {name} löschen', all: 'Alles löschen (alle Profile und Ergebnisse)',
       },
       reward: {
         levelUp: '🎉 <b>Level {level}</b> erreicht: {title}!',
@@ -188,6 +195,9 @@
         export: '⬇️ Exportieren', import: '⬆️ Importieren', file: 'tastaturtrainer-sicherung-{date}.json',
         reset: 'Fortschritt zurücksetzen', resetDesc: 'Sterne, XP und Statistik dieses Profils löschen.', resetBtn: 'Zurücksetzen',
         del: 'Profil löschen', delDesc: 'Entfernt „{name}“ komplett.', delBtn: 'Löschen',
+        storage: 'Speicherort der Ergebnisse',
+        storageFile: 'Datei: {path} – die Datei zu löschen (bei geschlossener App) setzt alles zurück.',
+        storageBrowser: 'Im Browser auf diesem Computer – nur für diesen Windows-Benutzer und diesen Browser.',
         footnote: 'Alle Daten werden nur lokal in diesem Browser gespeichert – nichts geht ins Internet.',
         gateTitle: 'Elternbereich', gateText: 'Bitte löse diese Aufgabe:',
         importTitle: 'Sicherung laden?', importText: 'Die Sicherung enthält {n} Profil(e). Alle aktuellen Profile auf diesem Computer werden dadurch ersetzt.', importOk: 'Ja, laden',

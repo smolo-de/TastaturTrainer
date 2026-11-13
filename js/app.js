@@ -88,8 +88,12 @@
     renderTop() {
       const tb = $('#topbar');
       const p = P();
+      const resetBtn = `<button class="reset-btn" id="tb-reset" title="${esc(t('top.resetTitle'))}">↺ <span>${t('top.reset')}</span></button>`;
+      const bindReset = () => { const b = $('#tb-reset'); if (b) b.onclick = (e) => { e.currentTarget.blur(); this.resetDialog(); }; };
       if (!p || this.current === 'profiles') {
-        tb.innerHTML = '<div class="brand"><span class="brand-ic">⌨️</span><span>TastaturTrainer</span></div>';
+        const hasProfiles = Object.keys(BT.Store.data.profiles).length > 0;
+        tb.innerHTML = `<div class="brand"><span class="brand-ic">⌨️</span><span>TastaturTrainer</span></div>${hasProfiles ? `<div class="tb-stats">${resetBtn}</div>` : ''}`;
+        bindReset();
         return;
       }
       const lv = Pr.levelInfo(p.xp);
@@ -102,8 +106,10 @@
             <span class="lv-pill">Lv ${lv.level}</span><span class="xpbar"><i style="width:${lv.pct}%"></i></span>
           </span>
           <button class="icon-btn" id="tb-sound" title="${esc(t('top.sound'))}">${p.settings.sound ? '🔊' : '🔇'}</button>
+          ${resetBtn}
           <button class="profile-btn" data-go="profiles" title="${esc(t('top.switchProfile'))}"><span class="av">${esc(p.avatar)}</span><span class="pn">${esc(p.name)}</span></button>
         </div>`;
+      bindReset();
       $('#tb-sound').onclick = (e) => {
         p.settings.sound = !p.settings.sound;
         BT.Store.save();
@@ -111,6 +117,71 @@
         e.currentTarget.blur();
         if (p.settings.sound) { BT.Sound.unlock(); BT.Sound.ok(); }
       };
+    },
+
+    /* ---------- Zurücksetzen (Kopfzeile) ---------- */
+    resetDialog() {
+      this.parentGate(() => {
+        const p = P();
+        const where = BT.Store.storageInfo();
+        const card = this.modal(`
+          <div class="big-emoji">↺</div>
+          <h2>${t('reset.title')}</h2>
+          <p>${t('reset.text')}</p>
+          ${where.kind === 'file' ? `<p class="hint">${t('reset.fileHint', { path: esc(where.location) })}</p>` : ''}
+          <div class="modal-actions col">
+            ${p ? `<button class="btn secondary" id="rs-profile">${t('reset.profile', { name: esc(p.name) })}</button>` : ''}
+            <button class="btn danger" id="rs-all">${t('reset.all')}</button>
+            <button class="btn ghost" data-close>${t('common.cancel')}</button>
+          </div>`);
+        const rp = $('#rs-profile', card);
+        if (rp) rp.onclick = () => {
+          BT.Store.resetProgress(p.id);
+          this.closeModal(); this.applySettings(); this.go('home');
+          this.toast(t('toast.progressReset'));
+        };
+        $('#rs-all', card).onclick = () => {
+          BT.Store.clearAll();
+          this.closeModal(); this.applySettings(); this.go('profiles');
+          this.toast(t('toast.allCleared'));
+        };
+      });
+    },
+
+    /* Kindersicherung vor Eltern-Aktionen (kleine Rechenaufgabe) */
+    parentGate(onOk, onCancel) {
+      const a = 6 + Math.floor(Math.random() * 4);
+      const b = 6 + Math.floor(Math.random() * 4);
+      const card = this.modal(`
+        <div class="big-emoji">👪</div>
+        <h2>${t('settings.gateTitle')}</h2>
+        <p>${t('settings.gateText')}</p>
+        <label class="field center"><span class="gate-q">${a} × ${b} = ?</span><input id="gate" inputmode="numeric" maxlength="3" autocomplete="off"></label>
+        <div class="modal-actions"><button class="btn ghost" id="gate-no">${t('common.cancel')}</button><button class="btn primary" data-primary id="gate-ok">${t('common.ok')}</button></div>`, { closable: false });
+      const inp = $('#gate', card);
+      setTimeout(() => inp.focus(), 60);
+      const ok = () => {
+        if (Number(inp.value) === a * b) { this.closeModal(); onOk(); return; }
+        inp.value = '';
+        inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+        inp.focus();
+      };
+      const cancel = () => { this.closeModal(); if (onCancel) onCancel(); };
+      $('#gate-ok', card).onclick = ok;
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); ok(); }
+        if (e.key === 'Escape') cancel();
+      });
+      $('#gate-no', card).onclick = cancel;
+    },
+
+    confirmModal(title, text, okLabel, onOk) {
+      const card = this.modal(`
+        <div class="big-emoji">⚠️</div>
+        <h2>${title}</h2>
+        <p>${text}</p>
+        <div class="modal-actions"><button class="btn ghost" data-close>${t('common.cancel')}</button><button class="btn danger" id="cf-ok">${okLabel}</button></div>`);
+      $('#cf-ok', card).onclick = () => { this.closeModal(); onOk(); };
     },
 
     /* ---------- Overlays ---------- */

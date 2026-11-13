@@ -152,6 +152,13 @@ div.brand { cursor: default; }
 .profile-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 6px; }
 .profile-btn .av { font-size: 1.5rem; }
 .icon-btn:hover, .profile-btn:hover, .brand:hover { filter: brightness(1.04); transform: translateY(-1px); }
+.reset-btn {
+  border: 0; height: 38px; padding: 0 14px; border-radius: 999px; cursor: pointer; font: 700 .95rem var(--font);
+  background: var(--card); color: var(--bad); box-shadow: var(--shadow-sm);
+}
+.reset-btn:hover { background: var(--bad-soft); transform: translateY(-1px); }
+.storage-path { word-break: break-all; }
+@media (max-width: 760px) { .reset-btn span { display: none; } }
 
 /* ---------- Grundbausteine ---------- */
 .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; }

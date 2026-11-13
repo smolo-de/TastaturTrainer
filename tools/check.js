@@ -43,6 +43,22 @@ ok(!/<script>(?!\s*<\/script>)/.test(html) && !/\son[a-z]+\s*=/.test(html), 'ind
 ok(/Content-Security-Policy/.test(html), 'index.html setzt eine Content-Security-Policy');
 console.log(`  ${allJs.length} Dateien geprüft`);
 
+section('Web-App: Manifest und Service Worker');
+const swSrc = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+try { new vm.Script(swSrc, { filename: 'sw.js' }); checks++; } catch (e) { fail('sw.js: ' + e.message); }
+const swList = vm.runInNewContext((swSrc.match(/const FILES = (\[[\s\S]*?\]);/) || [])[1] || '[]');
+const needed = ['index.html', 'manifest.webmanifest', 'icon.ico', 'icons/icon-192.png', 'icons/icon-512.png', 'css/style.css', ...scripts];
+needed.forEach((f) => ok(swList.includes(f), 'sw.js speichert ' + f + ' nicht für offline'));
+swList.filter((f) => f !== './').forEach((f) => ok(fs.existsSync(path.join(ROOT, f)), 'sw.js nennt fehlende Datei ' + f));
+let manifest = null;
+try { manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8')); } catch (e) { fail('manifest.webmanifest: ' + e.message); }
+if (manifest) {
+  ok(manifest.name && manifest.start_url && manifest.display === 'standalone', 'Manifest: Name/Start/Display');
+  (manifest.icons || []).forEach((i) => ok(fs.existsSync(path.join(ROOT, i.src)), 'Manifest-Icon fehlt: ' + i.src));
+  ok((manifest.icons || []).some((i) => i.sizes === '512x512') && (manifest.icons || []).some((i) => i.sizes === '192x192'), 'Manifest braucht Icons 192 und 512');
+}
+ok(/worker-src 'self'/.test(html) && /manifest-src 'self'/.test(html), 'CSP erlaubt nur eigene Worker/Manifeste');
+
 /* ---------- App im VM-Kontext laden (ohne main.js) ---------- */
 const store = {};
 const ctx = {

@@ -2,10 +2,15 @@
 
 ## Bedrohungsmodell
 
-Der TastaturTrainer ist eine reine Offline-App: HTML, CSS und JavaScript werden direkt von der Festplatte (`file://`) geöffnet.
+Der TastaturTrainer ist eine rein clientseitige App. Es gibt drei Varianten mit demselben Code:
 
-- Es gibt keinen Server, kein Konto, keine Netzwerkzugriffe und keine Fremdbibliotheken.
-- Gespeichert werden Vornamen der Kinder, Lernfortschritt und Tipp-Statistiken, und zwar im `localStorage` des Browsers.
+- **Web-App** über GitHub Pages oder einen Schulserver (statische Dateien)
+- **HTML-Datei** von der Festplatte (`file://`)
+- **Desktop-App** `TastaturTrainer.exe`
+
+Für alle drei gilt:
+- Es gibt keinen Server mit Logik, kein Konto, keine Netzwerkzugriffe aus der App und keine Fremdbibliotheken.
+- Gespeichert werden Vornamen der Kinder, Lernfortschritt und Tipp-Statistiken. In Web- und HTML-Variante liegen sie im `localStorage` des Browsers, in der Desktop-App in der Datei `TastaturTrainer-Daten.json`.
 
 Realistische Angriffswege sind daher:
 
@@ -22,7 +27,11 @@ Realistische Angriffswege sind daher:
 | Alle Nutzerdaten (Namen, Avatare, Verlaufstexte, getippte Zeichen) werden vor dem Einfügen in HTML escaped. Übersetzungen sind statisch und vertrauenswürdig. | `BT.esc` in allen Seiten |
 | Content-Security-Policy: keine Inline-Skripte und Inline-Event-Handler, keine Netzwerkverbindungen (`connect-src 'none'`), keine Frames/Objekte/Formulare. Der Start erfolgt über `js/main.js` statt eines Inline-Skripts. | `index.html` |
 | Keine Abhängigkeiten: weder npm-Pakete zur Laufzeit noch beim Build | `package.json` |
-| CI mit minimalen Rechten (`contents: read`, Schreibrecht nur im Release-Job), Actions auf Commit-SHA gepinnt, `persist-credentials: false`, keine `${{ }}`-Ausdrücke in Shell-Befehlen, Tag-Format wird geprüft, Dependabot für Action-Updates | `.github/` |
+| **Desktop-App:** kein Webserver und kein offener Port. Die eingebetteten Dateien werden nur unter einer festen internen Adresse ausgeliefert. Navigation zu anderen Adressen, neue Fenster und Berechtigungsanfragen werden blockiert. Entwicklerwerkzeuge, Kontextmenü und Browser-Tastenkürzel sind aus. | `desktop/Program.cs` |
+| **Desktop-App, Brücke zur Datei:** Die Web-App kann über das Host-Objekt nur eine einzige, feste Datei laden, speichern (max. 4 MB, atomar über eine Temp-Datei) oder löschen. Eine unlesbare Datei wird beiseitegelegt statt überschrieben. Es gibt keinen weiteren Dateisystem-Zugriff. | `HostBridge` in `desktop/Program.cs` |
+| **Desktop-App, Lieferkette:** Die WebView2-Pakete sind per NuGet-Lock-Datei mit Prüfsummen fixiert. `WebView2Loader.dll` wird vor jeder Nutzung per SHA-256 geprüft. Die EXE läuft als normaler Benutzer (`asInvoker`) und nur einmal pro Datendatei. | `desktop/` |
+| **Web-App:** Der Service Worker speichert nur die eigenen App-Dateien (gleiche Herkunft) für die Offline-Nutzung. Die CSP erlaubt Worker und Manifest nur von der eigenen Herkunft. | `sw.js`, `index.html` |
+| CI mit minimalen Rechten (`contents: read`, Schreibrecht nur in den Jobs für Release und Pages), Actions auf Commit-SHA gepinnt, `persist-credentials: false`, keine `${{ }}`-Ausdrücke in Shell-Befehlen, Tag-Format wird geprüft, Dependabot für Action-Updates | `.github/` |
 | Release-ZIP mit SHA-256-Prüfsumme, reproduzierbar über `SOURCE_DATE_EPOCH` | `tools/build.js` |
 
 ## Ergebnis des Security-Checks (November 2026)
@@ -39,8 +48,11 @@ Realistische Angriffswege sind daher:
 | 8 | Andere lokale HTML-Dateien im selben Browser können den Speicherstand lesen (Vornamen, Statistik). Das ist eine Eigenschaft von `file://` in Chromium. | info | akzeptiert. Die Integrität ist durch die Schema-Prüfung geschützt. Die Daten sind wenig sensibel. |
 | 9 | Die Rechenaufgabe im Elternbereich ist eine Kindersicherung, keine Zugriffskontrolle. | info | dokumentiert |
 | 10 | Sicherungsdateien enthalten die Vornamen im Klartext. | info | dokumentiert |
+| 11 | **Desktop-App (v1.1):** `WebView2Loader.dll` wird nach `%LOCALAPPDATA%` geschrieben und vor dem Laden per Prüfsumme kontrolliert. Ein Prozess desselben Benutzers könnte die Datei zwischen Prüfung und Laden tauschen. Das setzt aber voraus, dass bereits fremder Code als dieser Benutzer läuft. | info | akzeptiert |
+| 12 | **Desktop-App (v1.1):** Die EXE ist noch nicht signiert (SmartScreen-Warnung, Freigabe in Schulen nur per Hash). | niedrig | offen, siehe [SIGNING.md](SIGNING.md) |
+| 13 | **Web-App (v1.1):** Beim Abruf über GitHub Pages sieht GitHub (USA) die IP-Adresse. Die App selbst sendet nichts. | info | dokumentiert; Alternative: eigener Schulserver |
 
-**Prüfung:** Automatisiert und in der CI bei jedem Push.
+**Prüfung:** Automatisiert und in der CI bei jedem Push. Seit v1.1 startet außerdem `tools/build-exe.js --selftest` die EXE allein in einem leeren Ordner. Dabei werden Speichern und Laden der Datei, das Löschen und die Abwesenheit von JS-Fehlern und CSP-Verstößen geprüft. Der Browser-Test lädt die Web-App zusätzlich über http und testet den Offline-Start aus dem Service Worker.
 
 - `tools/check.js` testet XSS-Nutzlasten, Riesenzahlen, unbekannte Felder und Prototype-Pollution gegen die Datenprüfung.
 - `tools/e2e.js` startet die App mit einem manipulierten Speicherstand und prüft, dass kein Skript läuft und kein HTML eingeschleust wird.

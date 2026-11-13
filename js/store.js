@@ -13,6 +13,33 @@
   const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
   const MAX_PROFILES = 50;
 
+  /* Speicherort:
+   *  - Browser / GitHub Pages / HTML-Datei: localStorage dieses Browsers
+   *  - Desktop-App (TastaturTrainer.exe): Datei „TastaturTrainer-Daten.json“ über das Host-Objekt der EXE
+   *    (window.__TT_DESKTOP wird von der EXE vor allen Skripten gesetzt) */
+  function makeBackend() {
+    const w = typeof window !== 'undefined' ? window : {};
+    if (w.__TT_DESKTOP && w.chrome && w.chrome.webview && w.chrome.webview.hostObjects) {
+      const host = w.chrome.webview.hostObjects.sync.tt;
+      return {
+        kind: 'file',
+        location: String(host.DataFile || ''),
+        read: () => { const s = host.Load(); return typeof s === 'string' && s ? s : null; },
+        write: (s) => { if (!host.Save(s)) throw new Error('save failed'); },
+        clear: () => { host.Clear(); },
+        quarantine: () => { host.BackupCorrupt(); },
+      };
+    }
+    return {
+      kind: 'browser',
+      location: '',
+      read: () => localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY),
+      write: (s) => localStorage.setItem(KEY, s),
+      clear: () => { localStorage.removeItem(KEY); localStorage.removeItem(LEGACY_KEY); },
+      quarantine: () => {},
+    };
+  }
+
   /* Lektions-Reihenfolge der ersten Version (Speicherstand mit Index statt ID) */
   const LEGACY_QWERTZ = ['fj', 'dk', 'sl', 'aoe', 'gh', 'ei', 'ru', 'tz', 'nm', 'wo', 'c-comma', 'vb', 'qp', 'x-dot', 'y-dash',
     'umlauts', 'shift', 'punct', 'numbers', 'sentences'];
@@ -134,19 +161,34 @@
     MAX_IMPORT_BYTES,
     sanitizeData,
 
+    backend: null,
+
     load() {
+      if (!this.backend) this.backend = makeBackend();
       let raw = null;
-      try { raw = localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY); } catch (e) { this.persistOk = false; }
+      try { raw = this.backend.read(); } catch (e) { this.persistOk = false; }
       let parsed = null;
       if (raw) {
-        try { parsed = JSON.parse(raw); } catch (e) { console.warn('TastaturTrainer: Speicherstand unlesbar', e); }
+        try { parsed = JSON.parse(raw); } catch (e) {
+          console.warn('TastaturTrainer: Speicherstand unlesbar – wird als Sicherungskopie beiseitegelegt', e);
+          try { this.backend.quarantine(); } catch (e2) { /* egal */ }
+        }
       }
       this.data = sanitizeData(parsed);
     },
 
     save() {
-      try { localStorage.setItem(KEY, JSON.stringify(this.data)); this.persistOk = true; }
+      try { this.backend.write(JSON.stringify(this.data, null, this.backend.kind === 'file' ? 2 : 0)); this.persistOk = true; }
       catch (e) { this.persistOk = false; console.warn('TastaturTrainer: Speichern fehlgeschlagen', e); }
+    },
+
+    /* Speicherort für die Anzeige: Dateipfad (EXE) oder '' (Browser) */
+    storageInfo() { return { kind: this.backend ? this.backend.kind : 'browser', location: this.backend ? this.backend.location : '' }; },
+
+    /* Alles löschen: alle Profile und Ergebnisse (EXE: die Daten-Datei wird gelöscht) */
+    clearAll() {
+      try { this.backend.clear(); } catch (e) { console.warn('TastaturTrainer: Löschen fehlgeschlagen', e); }
+      this.data = { version: 2, activeId: null, lang: this.data.lang, profiles: {} };
     },
 
     get profile() { return this.data.profiles[this.data.activeId] || null; },

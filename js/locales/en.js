@@ -12,6 +12,7 @@
       top: {
         home: 'Home', stars: 'Stars collected', streak: 'Days practiced in a row',
         level: '{title} – {into} of {need} XP', sound: 'Sound on/off', switchProfile: 'Switch profile',
+        reset: 'Reset', resetTitle: 'Reset results (parents area)',
       },
       toast: {
         goal: '🥇 <b>Daily goal reached!</b> Great job, keep it up!',
@@ -25,6 +26,12 @@
         invalidBackup: '⚠️ This file is not a valid backup.',
         fileTooBig: '⚠️ This file is too large to be a backup.',
         progressReset: 'Progress reset',
+        allCleared: 'All results have been deleted.',
+      },
+      reset: {
+        title: 'Reset', text: 'What should be deleted? This cannot be undone.',
+        fileHint: 'The results are stored in this file: {path}',
+        profile: 'Delete the progress of {name} only', all: 'Delete everything (all profiles and results)',
       },
       reward: {
         levelUp: '🎉 <b>Level {level}</b> reached: {title}!',
@@ -188,6 +195,9 @@
         export: '⬇️ Export', import: '⬆️ Import', file: 'tastaturtrainer-backup-{date}.json',
         reset: 'Reset progress', resetDesc: 'Delete the stars, XP and statistics of this profile.', resetBtn: 'Reset',
         del: 'Delete profile', delDesc: 'Removes “{name}” completely.', delBtn: 'Delete',
+        storage: 'Where results are stored',
+        storageFile: 'File: {path} – deleting the file (while the app is closed) resets everything.',
+        storageBrowser: 'In the browser on this computer – only for this Windows user and this browser.',
         footnote: 'All data is stored only locally in this browser – nothing is sent to the internet.',
         gateTitle: 'Parents area', gateText: 'Please solve this:',
         importTitle: 'Load backup?', importText: 'The backup contains {n} profile(s). All current profiles on this computer will be replaced.', importOk: 'Yes, load it',

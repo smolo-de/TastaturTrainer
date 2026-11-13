@@ -23,6 +23,25 @@ const APP_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
 const SHOTS = process.env.E2E_SHOTS ? path.resolve(process.env.E2E_SHOTS) : null;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* Mini-Webserver nur für die Dateien der Web-App (wie GitHub Pages), nur auf 127.0.0.1 */
+const WEB_FILES = /^\/(index\.html|manifest\.webmanifest|sw\.js|icon\.ico|icons\/[\w-]+\.png|css\/[\w-]+\.css|js\/(locales\/)?[\w-]+\.js)$/;
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.ico': 'image/x-icon' };
+function startServer() {
+  const http = require('http');
+  const srv = http.createServer((req, res) => {
+    const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    const rel = p === '/' ? '/index.html' : p;
+    if (!WEB_FILES.test(rel)) { res.writeHead(404); res.end(); return; }
+    fs.readFile(path.join(ROOT, rel), (err, data) => {
+      if (err) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': TYPES[path.extname(rel)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+      res.end(data);
+    });
+  });
+  return new Promise((r) => srv.listen(0, '127.0.0.1', () => r(srv)));
+}
+
 function findBrowser() {
   if (process.env.BROWSER_BIN) return process.env.BROWSER_BIN;
   const cands = process.platform === 'win32'
@@ -180,6 +199,46 @@ const check = (cond, msg) => { if (!cond) problems.push('ASSERT ' + msg); };
     await go('trainRun', 'words');
     await shot(`${lang}-training-run`);
   }
+
+  /* Zurücksetzen-Button oben: Elternaufgabe lösen, dann „Alles löschen“ */
+  const solveGate = async () => {
+    const q = await ev("(document.querySelector('.gate-q')||{}).textContent || ''");
+    const m = q.match(/(\d+)\s*×\s*(\d+)/);
+    check(m, 'Elternaufgabe erscheint');
+    if (m) await ev(`document.querySelector('#gate').value='${Number(m[1]) * Number(m[2])}'; document.querySelector('#gate-ok').click()`);
+    await sleep(300);
+  };
+  await go('home');
+  check(await ev("!!document.querySelector('#tb-reset')"), 'Zurücksetzen-Button in der Kopfzeile');
+  await ev("document.querySelector('#tb-reset').click()");
+  await sleep(300);
+  await solveGate();
+  await shot('reset-dialog');
+  await ev("document.querySelector('#rs-all').click()");
+  await sleep(500);
+  check(await ev('BT.App.current') === 'profiles', 'Nach „Alles löschen“ Profilauswahl');
+  check(await ev('Object.keys(BT.Store.data.profiles).length') === 0, 'Alle Profile gelöscht');
+  check(await ev("localStorage.getItem('tastaturtrainer.v1')") === null, 'Speicher im Browser geleert');
+
+  /* Aufruf über http(s) wie bei GitHub Pages: Manifest, Service Worker, Offline-Start */
+  const server = await startServer();
+  const webUrl = `http://127.0.0.1:${server.address().port}/index.html`;
+  await send('Page.navigate', { url: webUrl });
+  await sleep(1500);
+  check(await ev("!!document.querySelector('link[rel=manifest]')"), 'Web: Manifest eingebunden');
+  check(await ev("navigator.serviceWorker.ready.then(r => !!r.active)"), 'Web: Service Worker aktiv');
+  await sleep(800);
+  await send('Network.enable');
+  await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await send('Page.reload', { ignoreCache: false });
+  await sleep(1500);
+  check(await ev("typeof BT === 'object' && BT.App.current === 'profiles'"), 'Web: App startet offline aus dem Cache');
+  await shot('web-offline');
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await ev('navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister())))');
+  server.close();
+  await send('Page.navigate', { url: APP_URL });
+  await sleep(1000);
 
   /* Sicherheit: manipulierter Speicherstand darf kein HTML/JS einschleusen */
   const evil = { activeId: 'pevil12345', profiles: { a: { id: 'pevil12345', name: '<img src=x onerror="window.__xss=1">', avatar: '<img src=x onerror="window.__xss=2">',

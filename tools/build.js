@@ -3,7 +3,7 @@
  *
  *   node tools/build.js
  *
- * Ergebnis: dist/TastaturTrainer-<version>.zip und dist/TastaturTrainer-<version>.zip.sha256
+ * Ergebnis: dist/TastaturTrainer-<version>.zip (+ .sha256) und dist/site/ (Web-App für GitHub Pages)
  * Das ZIP enthält nur die App (keine Tools/CI-Dateien) in einem Ordner „TastaturTrainer/“.
  * Mit SOURCE_DATE_EPOCH wird das Archiv reproduzierbar (gleiche Eingabe → gleiche Prüfsumme).
  */
@@ -16,7 +16,10 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const version = process.env.BT_VERSION || pkg.version;
-const INCLUDE = ['index.html', 'css', 'js', 'icon.ico', 'TastaturTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md', 'LICENSE'];
+/* Web-App (auch für GitHub Pages) */
+const WEB = ['index.html', 'manifest.webmanifest', 'sw.js', 'icon.ico', 'icons', 'css', 'js'];
+/* Release-ZIP: Web-App + Starter + Doku */
+const INCLUDE = [...WEB, 'TastaturTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md', 'SIGNING.md', 'LICENSE'];
 
 function collect(rel) {
   const abs = path.join(ROOT, rel);
@@ -68,3 +71,14 @@ fs.writeFileSync(out, zip);
 const sha = crypto.createHash('sha256').update(zip).digest('hex');
 fs.writeFileSync(out + '.sha256', `${sha}  ${path.basename(out)}\n`);
 console.log(`✓ ${path.relative(ROOT, out)} – ${files.length} Dateien, ${(zip.length / 1024).toFixed(0)} KB\n  SHA-256 ${sha}`);
+
+/* ---------- dist/site für GitHub Pages ---------- */
+const site = path.join(dist, 'site');
+fs.rmSync(site, { recursive: true, force: true });
+for (const rel of WEB.flatMap(collect)) {
+  const target = path.join(site, rel);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, rel), target);
+}
+fs.writeFileSync(path.join(site, '.nojekyll'), '');
+console.log('✓ ' + path.relative(ROOT, site) + ' – Web-App für GitHub Pages');
