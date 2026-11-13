@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-/* BlindTrainer – Release-Paket bauen (ohne npm-Abhängigkeiten)
+/* TastaturTrainer – Release-Paket bauen (ohne npm-Abhängigkeiten)
  *
  *   node tools/build.js
  *
- * Ergebnis: dist/BlindTrainer-<version>.zip und dist/BlindTrainer-<version>.zip.sha256
- * Das ZIP enthält nur die App (keine Tools/CI-Dateien) in einem Ordner „BlindTrainer/“.
+ * Ergebnis: dist/TastaturTrainer-<version>.zip und dist/TastaturTrainer-<version>.zip.sha256
+ * Das ZIP enthält nur die App (keine Tools/CI-Dateien) in einem Ordner „TastaturTrainer/“.
  * Mit SOURCE_DATE_EPOCH wird das Archiv reproduzierbar (gleiche Eingabe → gleiche Prüfsumme).
  */
 'use strict';
@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const version = process.env.BT_VERSION || pkg.version;
-const INCLUDE = ['index.html', 'css', 'js', 'icon.ico', 'BlindTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md'];
+const INCLUDE = ['index.html', 'css', 'js', 'icon.ico', 'TastaturTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md'];
 
 function collect(rel) {
   const abs = path.join(ROOT, rel);
@@ -38,7 +38,7 @@ const centrals = [];
 let offset = 0;
 for (const rel of files) {
   const data = fs.readFileSync(path.join(ROOT, rel));
-  const name = Buffer.from('BlindTrainer/' + rel, 'utf8');
+  const name = Buffer.from('TastaturTrainer/' + rel, 'utf8');
   const deflated = zlib.deflateRawSync(data, { level: 9 });
   const useDeflate = deflated.length < data.length;
   const body = useDeflate ? deflated : data;
@@ -63,7 +63,7 @@ const zip = Buffer.concat([...locals, cd, end]);
 
 const dist = path.join(ROOT, 'dist');
 fs.mkdirSync(dist, { recursive: true });
-const out = path.join(dist, `BlindTrainer-${version}.zip`);
+const out = path.join(dist, `TastaturTrainer-${version}.zip`);
 fs.writeFileSync(out, zip);
 const sha = crypto.createHash('sha256').update(zip).digest('hex');
 fs.writeFileSync(out + '.sha256', `${sha}  ${path.basename(out)}\n`);

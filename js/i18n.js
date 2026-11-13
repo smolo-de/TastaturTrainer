@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Internationalisierung (Deutsch / English)
+/* TastaturTrainer – Internationalisierung (Deutsch / English)
  * Jede Sprachdatei (js/locales/*.js) bringt mit:
  *   meta    – Name, Flagge, Locale, Tastatur-Layout
  *   ui      – alle Oberflächen-Texte (Strings mit {platzhaltern} oder Funktionen)

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* BlindTrainer – statische Prüfungen ohne Browser (läuft lokal und in der CI)
+/* TastaturTrainer – statische Prüfungen ohne Browser (läuft lokal und in der CI)
  *
  *   node tools/check.js
  *
@@ -211,6 +211,16 @@ ok(Object.keys(BT.Store.sanitizeData(many).profiles).length <= 50, 'Anzahl der P
 ok(Object.keys(BT.Store.sanitizeData(null).profiles).length === 0 && Object.keys(BT.Store.sanitizeData('x').profiles).length === 0, 'Ungültige Daten ergeben leeren Stand');
 ok(BT.Progress.levelFromXp(1e308) <= 1000, 'Level-Berechnung terminiert bei Riesenwerten');
 ok(BT.esc('<a href="x">\'&') === '&lt;a href=&quot;x&quot;&gt;&#39;&amp;', 'HTML-Escaping');
+
+section('Umbenennung: alter Speicherstand (BlindTrainer) wird übernommen');
+store['blindtrainer.v1'] = JSON.stringify({ activeId: 'pold12345', profiles: { a: { id: 'pold12345', name: 'Alt', avatar: '🐶', xp: 120, lessons: { 0: { stars: 2 } } } } });
+BT.Store.load();
+ok(BT.Store.profile && BT.Store.profile.name === 'Alt' && BT.Store.profile.lessons['qwertz:fj'].stars === 2, 'Profil aus altem Schlüssel geladen');
+BT.Store.save();
+ok('tastaturtrainer.v1' in store, 'Speichern unter neuem Schlüssel');
+store['tastaturtrainer.v1'] = JSON.stringify({ profiles: {} });
+BT.Store.load();
+ok(!BT.Store.profile, 'Neuer Schlüssel hat Vorrang vor dem alten');
 
 const i18nWarnings = warnings.filter((w) => w.includes('i18n'));
 ok(!i18nWarnings.length, 'Keine fehlenden Übersetzungen zur Laufzeit: ' + i18nWarnings.slice(0, 5).join(' | '));

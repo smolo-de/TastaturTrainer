@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – App-Kern, Navigation, Profile, Startseite, Lernpfad, Lektionen */
+/* TastaturTrainer – App-Kern, Navigation, Profile, Startseite, Lernpfad, Lektionen */
 (function (BT) {
   const esc = BT.esc;
   const t = (k, p) => BT.t(k, p);
@@ -89,12 +89,12 @@
       const tb = $('#topbar');
       const p = P();
       if (!p || this.current === 'profiles') {
-        tb.innerHTML = '<div class="brand"><span class="brand-ic">⌨️</span><span>BlindTrainer</span></div>';
+        tb.innerHTML = '<div class="brand"><span class="brand-ic">⌨️</span><span>TastaturTrainer</span></div>';
         return;
       }
       const lv = Pr.levelInfo(p.xp);
       tb.innerHTML = `
-        <button class="brand" data-go="home" title="${esc(t('top.home'))}"><span class="brand-ic">⌨️</span><span>BlindTrainer</span></button>
+        <button class="brand" data-go="home" title="${esc(t('top.home'))}"><span class="brand-ic">⌨️</span><span>TastaturTrainer</span></button>
         <div class="tb-stats">
           <span class="chip" title="${esc(t('top.stars'))}">⭐ <b>${Pr.totalStars(p)}</b></span>
           <span class="chip" title="${esc(t('top.streak'))}">🔥 <b>${Pr.streak(p)}</b></span>

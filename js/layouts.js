@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Tastatur-Layouts (deutsch QWERTZ, US-QWERTY) und Finger */
+/* TastaturTrainer – Tastatur-Layouts (deutsch QWERTZ, US-QWERTY) und Finger */
 (function (BT) {
   /* Fingernamen werden von der Sprachdatei ergänzt (name, dat) */
   BT.FINGERS = {

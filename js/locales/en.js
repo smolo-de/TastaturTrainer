@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – English (US keyboard, QWERTY) */
+/* TastaturTrainer – English (US keyboard, QWERTY) */
 (function (BT) {
   const plural = (n, one, many) => (n === 1 ? one : many);
 
@@ -7,7 +7,7 @@
     meta: { code: 'en', name: 'English', flag: 'EN', locale: 'en-US', layout: 'us', keyboard: 'US keyboard (QWERTY)', keepCase: true },
 
     ui: {
-      app: { title: 'BlindTrainer – Touch Typing Adventure', mascot: 'Professor Hoot' },
+      app: { title: 'TastaturTrainer – Touch Typing Adventure', mascot: 'Professor Hoot' },
       common: { cancel: 'Cancel', ok: 'OK', back: 'Back', again: '↻ Again', save: 'Save' },
       top: {
         home: 'Home', stars: 'Stars collected', streak: 'Days practiced in a row',
@@ -34,7 +34,7 @@
         record: '🏅 New record!',
       },
       welcome: {
-        title: 'Welcome to BlindTrainer!',
+        title: 'Welcome to TastaturTrainer!',
         lead: 'Learn to touch type with all ten fingers – step by step, with games, stars and badges.',
         who: "Who's practicing today?",
         profileSub: 'Level {level} · ⭐ {stars}',
@@ -185,7 +185,7 @@
         goal: '🎯 Daily goal', goalMin: 'Minutes per day', goalDesc: 'Counts the actual typing time in lessons, practice and games.',
         parents: '👪 For parents', unlock: 'Unlock all lessons', unlockDesc: 'For example, if your child already has some experience.',
         backup: 'Backup', backupDesc: 'Save all profiles to a file or restore them.',
-        export: '⬇️ Export', import: '⬆️ Import', file: 'blindtrainer-backup-{date}.json',
+        export: '⬇️ Export', import: '⬆️ Import', file: 'tastaturtrainer-backup-{date}.json',
         reset: 'Reset progress', resetDesc: 'Delete the stars, XP and statistics of this profile.', resetBtn: 'Reset',
         del: 'Delete profile', delDesc: 'Removes “{name}” completely.', delBtn: 'Delete',
         footnote: 'All data is stored only locally in this browser – nothing is sent to the internet.',
@@ -327,7 +327,7 @@
           <li><span>📅</span><div><b>A little every day:</b> 10 minutes a day helps more than one hour on the weekend.</div></li>
           <li><span>🤲</span><div><b>Breaks:</b> When your hands get tired, shake them out.</div></li>
         </ul>` },
-      { title: 'How BlindTrainer works', body: `
+      { title: 'How TastaturTrainer works', body: `
         <ul class="checklist">
           <li><span>🗺️</span><div><b>Learning path:</b> {lessons} lessons in {worlds} worlds. Each lesson teaches you new keys.</div></li>
           <li><span>🔁</span><div><b>3 rounds per lesson:</b> First the new keys, then a letter mix, then real words.</div></li>

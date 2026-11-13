@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Deutsch (deutsche Tastatur, QWERTZ) */
+/* TastaturTrainer – Deutsch (deutsche Tastatur, QWERTZ) */
 (function (BT) {
   const plural = (n, one, many) => (n === 1 ? one : many);
 
@@ -7,7 +7,7 @@
     meta: { code: 'de', name: 'Deutsch', flag: 'DE', locale: 'de-DE', layout: 'qwertz', keyboard: 'Deutsche Tastatur (QWERTZ)' },
 
     ui: {
-      app: { title: 'BlindTrainer – 10-Finger-Abenteuer', mascot: 'Professor Uhu' },
+      app: { title: 'TastaturTrainer – 10-Finger-Abenteuer', mascot: 'Professor Uhu' },
       common: { cancel: 'Abbrechen', ok: 'OK', back: 'Zurück', again: '↻ Nochmal', save: 'Speichern' },
       top: {
         home: 'Startseite', stars: 'Gesammelte Sterne', streak: 'Tage hintereinander geübt',
@@ -34,7 +34,7 @@
         record: '🏅 Neuer Rekord!',
       },
       welcome: {
-        title: 'Willkommen beim BlindTrainer!',
+        title: 'Willkommen beim TastaturTrainer!',
         lead: 'Lerne das 10-Finger-System – Schritt für Schritt, mit Spielen, Sternen und Abzeichen.',
         who: 'Wer übt heute?',
         profileSub: 'Level {level} · ⭐ {stars}',
@@ -185,7 +185,7 @@
         goal: '🎯 Tagesziel', goalMin: 'Minuten pro Tag', goalDesc: 'Gezählt wird die reine Tipp-Zeit in Lektionen, Training und Spielen.',
         parents: '👪 Für Eltern', unlock: 'Alle Lektionen freischalten', unlockDesc: 'Zum Beispiel, wenn schon Vorkenntnisse da sind.',
         backup: 'Sicherung', backupDesc: 'Alle Profile als Datei speichern oder wiederherstellen.',
-        export: '⬇️ Exportieren', import: '⬆️ Importieren', file: 'blindtrainer-sicherung-{date}.json',
+        export: '⬇️ Exportieren', import: '⬆️ Importieren', file: 'tastaturtrainer-sicherung-{date}.json',
         reset: 'Fortschritt zurücksetzen', resetDesc: 'Sterne, XP und Statistik dieses Profils löschen.', resetBtn: 'Zurücksetzen',
         del: 'Profil löschen', delDesc: 'Entfernt „{name}“ komplett.', delBtn: 'Löschen',
         footnote: 'Alle Daten werden nur lokal in diesem Browser gespeichert – nichts geht ins Internet.',
@@ -334,7 +334,7 @@
           <li><span>📅</span><div><b>Jeden Tag ein bisschen:</b> 10 Minuten am Tag bringen mehr als eine Stunde am Wochenende.</div></li>
           <li><span>🤲</span><div><b>Pausen:</b> Wenn die Hände müde werden, kurz ausschütteln.</div></li>
         </ul>` },
-      { title: 'So funktioniert BlindTrainer', body: `
+      { title: 'So funktioniert der TastaturTrainer', body: `
         <ul class="checklist">
           <li><span>🗺️</span><div><b>Lernpfad:</b> {lessons} Lektionen in {worlds} Welten. Jede Lektion bringt dir neue Tasten bei.</div></li>
           <li><span>🔁</span><div><b>3 Runden pro Lektion:</b> Erst die neuen Tasten, dann ein Buchstaben-Mix, dann echte Wörter.</div></li>

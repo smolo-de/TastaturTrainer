@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Tipp-Engine und Tipp-Ansicht */
+/* TastaturTrainer – Tipp-Engine und Tipp-Ansicht */
 (function (BT) {
   const esc = BT.esc;
   const t = (k, p) => BT.t(k, p);

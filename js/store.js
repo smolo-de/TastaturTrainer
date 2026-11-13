@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Speicherung (lokal im Browser, localStorage)
+/* TastaturTrainer – Speicherung (lokal im Browser, localStorage)
  *
  * Sicherheit: Alles, was aus localStorage oder einer importierten Datei kommt, gilt als
  * nicht vertrauenswürdig (andere lokale Seiten können file://-Speicher verändern, eine
@@ -8,7 +8,8 @@
  * Avatare nur aus der festen Liste.
  */
 (function (BT) {
-  const KEY = 'blindtrainer.v1';
+  const KEY = 'tastaturtrainer.v1';
+  const LEGACY_KEY = 'blindtrainer.v1'; // alter Name (BlindTrainer) – wird beim ersten Start übernommen
   const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
   const MAX_PROFILES = 50;
 
@@ -135,17 +136,17 @@
 
     load() {
       let raw = null;
-      try { raw = localStorage.getItem(KEY); } catch (e) { this.persistOk = false; }
+      try { raw = localStorage.getItem(KEY) || localStorage.getItem(LEGACY_KEY); } catch (e) { this.persistOk = false; }
       let parsed = null;
       if (raw) {
-        try { parsed = JSON.parse(raw); } catch (e) { console.warn('BlindTrainer: Speicherstand unlesbar', e); }
+        try { parsed = JSON.parse(raw); } catch (e) { console.warn('TastaturTrainer: Speicherstand unlesbar', e); }
       }
       this.data = sanitizeData(parsed);
     },
 
     save() {
       try { localStorage.setItem(KEY, JSON.stringify(this.data)); this.persistOk = true; }
-      catch (e) { this.persistOk = false; console.warn('BlindTrainer: Speichern fehlgeschlagen', e); }
+      catch (e) { this.persistOk = false; console.warn('TastaturTrainer: Speichern fehlgeschlagen', e); }
     },
 
     get profile() { return this.data.profiles[this.data.activeId] || null; },

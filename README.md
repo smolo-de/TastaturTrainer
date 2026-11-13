@@ -1,17 +1,17 @@
-# ⌨️ BlindTrainer – das 10-Finger-Abenteuer
+# ⌨️ TastaturTrainer – das 10-Finger-Abenteuer
 
 Ein Lernspiel für Kinder: Es bringt ihnen das **Blindschreiben (10-Finger-System)** bei. Das geht Schritt für Schritt, mit Erklärungen, Runden, Sternen, Levels, Abzeichen und Mini-Spielen.
 
 Die App läuft komplett **lokal und offline**. Es muss nichts installiert werden, und es werden keine Daten ins Internet geschickt.
 
-> 🇬🇧 **English:** BlindTrainer is an offline touch typing trainer for children. It is available in **English (US QWERTY keyboard)** and **German (QWERTZ keyboard)**. To start it, double-click `BlindTrainer starten.bat` or open `index.html`. Switch the language on the start screen or in *Settings → Language & keyboard*.
+> 🇬🇧 **English:** TastaturTrainer is an offline touch typing trainer for children. It is available in **English (US QWERTY keyboard)** and **German (QWERTZ keyboard)**. To start it, double-click `TastaturTrainer starten.bat` or open `index.html`. Switch the language on the start screen or in *Settings → Language & keyboard*.
 
 ## Starten
 
 | Weg | So geht's |
 |---|---|
-| **Empfohlen** | Doppelklick auf **`BlindTrainer starten.bat`**. Die App öffnet sich in einem eigenen Fenster: Microsoft Edge bzw. Chrome im App-Modus, ohne Adressleiste. |
-| Desktop-Symbol | Einmal **`Desktop-Verknuepfung erstellen.bat`** doppelklicken. Danach liegt „BlindTrainer“ mit eigenem Symbol auf dem Desktop. |
+| **Empfohlen** | Doppelklick auf **`TastaturTrainer starten.bat`**. Die App öffnet sich in einem eigenen Fenster: Microsoft Edge bzw. Chrome im App-Modus, ohne Adressleiste. |
+| Desktop-Symbol | Einmal **`Desktop-Verknuepfung erstellen.bat`** doppelklicken. Danach liegt „TastaturTrainer“ mit eigenem Symbol auf dem Desktop. |
 | Direkt | `index.html` im Browser öffnen (Edge, Chrome oder Firefox) |
 
 > Der Fortschritt wird im Browser gespeichert. Am besten immer auf dieselbe Weise starten, damit derselbe Browser benutzt wird.
@@ -56,7 +56,7 @@ Reines HTML, CSS und JavaScript, ohne Abhängigkeiten. Für die Werkzeuge reicht
 ```bash
 npm run check   # Syntax, Übersetzungen, Kursinhalte, Sicherheitstests der Datenprüfung
 npm run e2e     # Browser-Test mit headless Chrome/Edge (beide Sprachen, CSP, XSS)
-npm run build   # dist/BlindTrainer-<version>.zip + SHA-256
+npm run build   # dist/TastaturTrainer-<version>.zip + SHA-256
 ```
 
 | Datei | Inhalt |

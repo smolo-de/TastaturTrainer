@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Fortschritt, Sterne, XP, Level, Abzeichen */
+/* TastaturTrainer – Fortschritt, Sterne, XP, Level, Abzeichen */
 (function (BT) {
   const pad = (n) => String(n).padStart(2, '0');
   const dayKey = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());

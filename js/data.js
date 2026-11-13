@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – sprachunabhängige Stammdaten */
+/* TastaturTrainer – sprachunabhängige Stammdaten */
 window.BT = window.BT || {};
 
 (function (BT) {

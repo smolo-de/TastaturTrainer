@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Soundeffekte, komplett synthetisch (WebAudio, keine Dateien nötig) */
+/* TastaturTrainer – Soundeffekte, komplett synthetisch (WebAudio, keine Dateien nötig) */
 (function (BT) {
   BT.Sound = {
     ctx: null,

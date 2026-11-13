@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* BlindTrainer – Browser-Smoke-Test über das Chrome DevTools Protocol (ohne npm-Abhängigkeiten)
+/* TastaturTrainer – Browser-Smoke-Test über das Chrome DevTools Protocol (ohne npm-Abhängigkeiten)
  *
  *   node tools/e2e.js                 Chrome/Edge automatisch suchen
  *   BROWSER_BIN=/pfad/zu/chrome node tools/e2e.js
@@ -184,7 +184,7 @@ const check = (cond, msg) => { if (!cond) problems.push('ASSERT ' + msg); };
   /* Sicherheit: manipulierter Speicherstand darf kein HTML/JS einschleusen */
   const evil = { activeId: 'pevil12345', profiles: { a: { id: 'pevil12345', name: '<img src=x onerror="window.__xss=1">', avatar: '<img src=x onerror="window.__xss=2">',
     history: [{ t: 1, kind: 'lesson', label: '<img src=x onerror="window.__xss=3">', zpm: 10, acc: 1 }], settings: { lang: 'de' } } } };
-  await ev(`localStorage.setItem('blindtrainer.v1', ${JSON.stringify(JSON.stringify(evil))})`);
+  await ev(`localStorage.setItem('tastaturtrainer.v1', ${JSON.stringify(JSON.stringify(evil))})`);
   await send('Page.navigate', { url: APP_URL });
   await sleep(1200);
   for (const s of ['home', 'stats', 'settings', 'profiles']) await go(s);

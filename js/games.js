@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Spiele: Tasten-Blitz, Wort-Regen, Tier-Rennen */
+/* TastaturTrainer – Spiele: Tasten-Blitz, Wort-Regen, Tier-Rennen */
 (function (BT) {
   const { $, $$, esc, pick, int, rstat, P, t } = BT.ui;
   const S = BT.Screens;

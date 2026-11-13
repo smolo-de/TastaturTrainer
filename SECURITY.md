@@ -2,7 +2,7 @@
 
 ## Bedrohungsmodell
 
-BlindTrainer ist eine reine Offline-App: HTML, CSS und JavaScript werden direkt von der Festplatte (`file://`) geöffnet.
+Der TastaturTrainer ist eine reine Offline-App: HTML, CSS und JavaScript werden direkt von der Festplatte (`file://`) geöffnet.
 
 - Es gibt keinen Server, kein Konto, keine Netzwerkzugriffe und keine Fremdbibliotheken.
 - Gespeichert werden Vornamen der Kinder, Lernfortschritt und Tipp-Statistiken, und zwar im `localStorage` des Browsers.

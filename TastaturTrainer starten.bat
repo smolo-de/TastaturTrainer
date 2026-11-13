@@ -1,6 +1,6 @@
 @echo off
 rem ------------------------------------------------------------
-rem  BlindTrainer starten
+rem  TastaturTrainer starten
 rem  Oeffnet die App in einem eigenen Fenster (Edge/Chrome App-Modus).
 rem  Falls beides fehlt, wird der Standard-Browser verwendet.
 rem ------------------------------------------------------------

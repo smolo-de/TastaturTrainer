@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Bildschirmtastatur und Hände */
+/* TastaturTrainer – Bildschirmtastatur und Hände */
 (function (BT) {
   const LETTER = /^[a-zäöü]$/;
   const esc = BT.esc;

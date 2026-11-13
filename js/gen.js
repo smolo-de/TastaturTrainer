@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Übungstexte erzeugen (nur mit Tasten, die schon gelernt wurden) */
+/* TastaturTrainer – Übungstexte erzeugen (nur mit Tasten, die schon gelernt wurden) */
 (function (BT) {
   const VOW = new Set(['a', 'e', 'i', 'o', 'u', 'ä', 'ö', 'ü']);
   const LETTER = /^[a-zäöüß]$/;

@@ -1,5 +1,5 @@
 'use strict';
-/* BlindTrainer – Anleitung, Training, Erfolge, Statistik, Einstellungen */
+/* TastaturTrainer – Anleitung, Training, Erfolge, Statistik, Einstellungen */
 (function (BT) {
   const { $, $$, esc, pct, int, rstat, P, t } = BT.ui;
   const S = BT.Screens;
