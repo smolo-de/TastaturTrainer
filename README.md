@@ -1,27 +1,28 @@
 # ⌨️ TastaturTrainer – das 10-Finger-Abenteuer
 
-Ein Lernspiel für Kinder: Es bringt ihnen das **Blindschreiben (10-Finger-System)** bei. Das geht Schritt für Schritt, mit Erklärungen, Runden, Sternen, Levels, Abzeichen und Mini-Spielen.
+## ▶ [Jetzt im Browser starten: smolo-de.github.io/TastaturTrainer](https://smolo-de.github.io/TastaturTrainer/)
 
-Die App läuft komplett **lokal**: im Browser, als einzelne EXE oder als HTML-Datei. Es muss nichts installiert werden, es braucht keine Admin-Rechte, und es werden keine Daten ins Internet geschickt.
+| Weg | So startest du | Wo liegen die Ergebnisse? |
+|---|---|---|
+| 🌐 **Im Browser**<br>am einfachsten, z. B. für Schulen | **[smolo-de.github.io/TastaturTrainer](https://smolo-de.github.io/TastaturTrainer/)** öffnen – fertig. Optional in Edge/Chrome über ⋯ → *Apps* → *Als App installieren*: dann gibt es ein eigenes Fenster, die App läuft auch offline, Admin-Rechte sind nicht nötig. | im Browser des Windows-Benutzers |
+| 🖥️ **Desktop-App** | **[⬇ TastaturTrainer.exe herunterladen](https://github.com/smolo-de/TastaturTrainer/releases/latest/download/TastaturTrainer.exe)** und doppelklicken. Eine einzige Datei, keine Installation, keine Admin-Rechte. | in `TastaturTrainer-Daten.json` direkt neben der EXE (wenn der Ordner schreibgeschützt ist: `%APPDATA%\TastaturTrainer\`) |
+| 📄 **HTML-Version** | **[⬇ ZIP aus dem neuesten Release](https://github.com/smolo-de/TastaturTrainer/releases/latest)** entpacken und `index.html` öffnen. Geht ohne Internet, auch vom Netzlaufwerk. | im Browser des Windows-Benutzers |
 
-> 🇬🇧 **English:** TastaturTrainer is an offline touch typing trainer for children. It is available in **English (US QWERTY keyboard)** and **German (QWERTZ keyboard)**. Open it in the browser at **https://smolo-de.github.io/TastaturTrainer/** (installable as an app, works offline). You can also download `TastaturTrainer.exe` (a single file, no installation, results are saved in `TastaturTrainer-Daten.json` next to it) or use the ZIP with `index.html`. Switch the language on the start screen or in *Settings → Language & keyboard*.
+**↺ Zurücksetzen:** Oben in der App gibt es einen Button, abgesichert mit einer kleinen Rechenaufgabe für Eltern und Lehrkräfte. Er löscht den Fortschritt eines Profils oder alles. Bei der EXE reicht es auch, `TastaturTrainer-Daten.json` zu löschen, während die App geschlossen ist.
+
+> 🇬🇧 **English:** **[Start in the browser](https://smolo-de.github.io/TastaturTrainer/)** · **[Download TastaturTrainer.exe](https://github.com/smolo-de/TastaturTrainer/releases/latest/download/TastaturTrainer.exe)** · **[ZIP (HTML version)](https://github.com/smolo-de/TastaturTrainer/releases/latest)**
+> A touch typing trainer for children in **English (US QWERTY keyboard)** and **German (QWERTZ keyboard)**. No installation and no admin rights needed; no data leaves the computer. Switch the language on the start screen or in *Settings → Language & keyboard*.
+
+---
+
+Ein Lernspiel für Kinder: Es bringt ihnen das **Blindschreiben (10-Finger-System)** bei. Das geht Schritt für Schritt, mit Erklärungen, Runden, Sternen, Levels, Abzeichen und Mini-Spielen. Die App läuft komplett **lokal**. Es muss nichts installiert werden, es braucht keine Admin-Rechte, und es werden keine Daten ins Internet geschickt.
 
 > [!WARNING]
 > **Haftungsausschluss:** Der TastaturTrainer ist eine **„Vibe-Coding“-App**. Er ist mit Unterstützung von **Claude** (KI-Assistent von Anthropic) entstanden. Die App wird **ohne jede Gewähr oder Garantie** bereitgestellt – weder für Richtigkeit noch für Funktion, Eignung oder Sicherheit. Die Nutzung erfolgt auf eigene Verantwortung. Es gilt die [MIT-Lizenz](LICENSE).
 >
 > **Disclaimer:** TastaturTrainer is a **“vibe coding” app** that was built with the help of **Claude** (AI assistant by Anthropic). It is provided **as is, without any warranty or guarantee** of correctness, functionality, fitness for a particular purpose or security. Use it at your own risk. Licensed under the [MIT License](LICENSE).
 
-## Starten – drei Wege
-
-| Weg | Für wen | So geht's | Wo liegen die Ergebnisse? |
-|---|---|---|---|
-| 🌐 **Im Browser (Link)** | Schulen, alle Geräte | **https://smolo-de.github.io/TastaturTrainer/** öffnen. In Edge/Chrome lässt sich die Seite über ⋯ → *Apps* → *Als App installieren* wie ein Programm mit eigenem Fenster nutzen – ohne Admin-Rechte, danach auch offline. | im Browser des jeweiligen Windows-Benutzers |
-| 🖥️ **Desktop-App (EXE)** | einzelne PCs, USB-Stick | `TastaturTrainer.exe` aus dem [Release](https://github.com/smolo-de/TastaturTrainer/releases) herunterladen und doppelklicken. Eine einzige Datei, keine Installation, keine Admin-Rechte. | in **`TastaturTrainer-Daten.json`** direkt neben der EXE (wenn der Ordner schreibgeschützt ist: `%APPDATA%\TastaturTrainer\`) |
-| 📄 **HTML-Datei (ZIP)** | ohne Internet, Netzlaufwerk | ZIP aus dem Release entpacken und `index.html` öffnen – oder `TastaturTrainer starten.bat` (öffnet ein App-Fenster in Edge/Chrome). | im Browser des jeweiligen Windows-Benutzers |
-
-**Zurücksetzen:** Oben in der App gibt es den Button **↺ Zurücksetzen** (mit kleiner Rechenaufgabe für Eltern/Lehrkräfte). Er löscht wahlweise den Fortschritt eines Profils oder alles. Bei der EXE kann man stattdessen auch einfach die Datei `TastaturTrainer-Daten.json` löschen, während die App geschlossen ist.
-
-### Für Schulen: Was ist der beste Weg?
+## Für Schulen: Was ist der beste Weg?
 
 - **Am einfachsten:** den Link verteilen, z. B. im Schulportal, in Moodle/IServ oder als Lesezeichen. Es braucht keine Installation, keine Rechte und keine IT-Freigabe. Das funktioniert auf jedem PC, Chromebook oder Tablet mit Tastatur.
 - **Datenschutz:** Die App sendet nichts. Es gibt keine Cookies, kein Tracking und keine externen Schriften oder Dienste. Beim Laden der Seite sieht GitHub (USA) technisch bedingt die IP-Adresse, wie bei jeder Website. Wer das vermeiden will, legt den Inhalt von `dist/site` (oder des ZIP) auf den **eigenen Schulserver**. Das sind nur statische Dateien, eine Serverlogik ist nicht nötig.
