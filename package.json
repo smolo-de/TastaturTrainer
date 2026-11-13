@@ -2,6 +2,7 @@
   "name": "tastaturtrainer",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Touch typing trainer for children (German QWERTZ and US QWERTY) – runs locally in the browser, no dependencies.",
   "scripts": {
     "check": "node tools/check.js",

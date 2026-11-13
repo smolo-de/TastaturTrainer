@@ -6,6 +6,11 @@ Die App läuft komplett **lokal und offline**. Es muss nichts installiert werden
 
 > 🇬🇧 **English:** TastaturTrainer is an offline touch typing trainer for children. It is available in **English (US QWERTY keyboard)** and **German (QWERTZ keyboard)**. To start it, double-click `TastaturTrainer starten.bat` or open `index.html`. Switch the language on the start screen or in *Settings → Language & keyboard*.
 
+> [!WARNING]
+> **Haftungsausschluss:** Der TastaturTrainer ist eine **„Vibe-Coding“-App**. Er ist mit Unterstützung von **Claude** (KI-Assistent von Anthropic) entstanden. Die App wird **ohne jede Gewähr oder Garantie** bereitgestellt – weder für Richtigkeit noch für Funktion, Eignung oder Sicherheit. Die Nutzung erfolgt auf eigene Verantwortung. Es gilt die [MIT-Lizenz](LICENSE).
+>
+> **Disclaimer:** TastaturTrainer is a **“vibe coding” app** that was built with the help of **Claude** (AI assistant by Anthropic). It is provided **as is, without any warranty or guarantee** of correctness, functionality, fitness for a particular purpose or security. Use it at your own risk. Licensed under the [MIT License](LICENSE).
+
 ## Starten
 
 | Weg | So geht's |

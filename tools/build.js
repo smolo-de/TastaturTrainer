@@ -16,7 +16,7 @@ const crypto = require('crypto');
 const ROOT = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const version = process.env.BT_VERSION || pkg.version;
-const INCLUDE = ['index.html', 'css', 'js', 'icon.ico', 'TastaturTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md'];
+const INCLUDE = ['index.html', 'css', 'js', 'icon.ico', 'TastaturTrainer starten.bat', 'Desktop-Verknuepfung erstellen.bat', 'README.md', 'SECURITY.md', 'LICENSE'];
 
 function collect(rel) {
   const abs = path.join(ROOT, rel);
