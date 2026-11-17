@@ -8,7 +8,9 @@ Der TastaturTrainer ist eine rein clientseitige App. Es gibt drei Varianten mit 
 - **HTML-Datei** von der Festplatte (`file://`)
 - **Desktop-App** `TastaturTrainer.exe`
 
-Für alle drei gilt:
+Dazu kommt optional der **Heimserver** (`server/`, Docker/Unraid). Er speichert die Profile zentral und ist weiter unten getrennt beschrieben.
+
+Für die drei Varianten gilt:
 - Es gibt keinen Server mit Logik, kein Konto, keine Netzwerkzugriffe aus der App und keine Fremdbibliotheken.
 - Gespeichert werden Vornamen der Kinder, Lernfortschritt und Tipp-Statistiken. In Web- und HTML-Variante liegen sie im `localStorage` des Browsers, in der Desktop-App in der Datei `TastaturTrainer-Daten.json`.
 
@@ -31,6 +33,7 @@ Realistische Angriffswege sind daher:
 | **Desktop-App, Brücke zur Datei:** Die Web-App kann über das Host-Objekt nur eine einzige, feste Datei laden, speichern (max. 4 MB, atomar über eine Temp-Datei) oder löschen. Eine unlesbare Datei wird beiseitegelegt statt überschrieben. Es gibt keinen weiteren Dateisystem-Zugriff. | `HostBridge` in `desktop/Program.cs` |
 | **Desktop-App, Lieferkette:** Die WebView2-Pakete sind per NuGet-Lock-Datei mit Prüfsummen fixiert. `WebView2Loader.dll` wird vor jeder Nutzung per SHA-256 geprüft. Die EXE läuft als normaler Benutzer (`asInvoker`) und nur einmal pro Datendatei. | `desktop/` |
 | **Web-App:** Der Service Worker speichert nur die eigenen App-Dateien (gleiche Herkunft) für die Offline-Nutzung. Die CSP erlaubt Worker und Manifest nur von der eigenen Herkunft. | `sw.js`, `index.html` |
+| **Heimserver:** liefert nur die Dateien der Web-App aus (feste Liste, kein Zugriff auf `server/`, `tools/`, `.git` oder die Daten). Die API nimmt nur JSON an (`Content-Type: application/json`, fremde Seiten scheitern damit am CORS-Preflight). Profil-IDs werden geprüft, die Grenzen sind max. 1 MB pro Anfrage und max. 50 Profile. Geschrieben wird atomar mit `.bak`, eine unlesbare Datei wird beiseitegelegt. Im Container läuft der Server als normaler Benutzer. Die Profile werden beim Laden in der App weiter gegen das Schema geprüft. Ist der Server beim Laden nicht erreichbar, wird nichts geschrieben. | `server/server.js`, `server/tt-server.js`, `Dockerfile` |
 | CI mit minimalen Rechten (`contents: read`, Schreibrecht nur in den Jobs für Release und Pages), Actions auf Commit-SHA gepinnt, `persist-credentials: false`, keine `${{ }}`-Ausdrücke in Shell-Befehlen, Tag-Format wird geprüft, Dependabot für Action-Updates | `.github/` |
 | Release-ZIP mit SHA-256-Prüfsumme, reproduzierbar über `SOURCE_DATE_EPOCH` | `tools/build.js` |
 
@@ -51,10 +54,12 @@ Realistische Angriffswege sind daher:
 | 11 | **Desktop-App (v1.1):** `WebView2Loader.dll` wird nach `%LOCALAPPDATA%` geschrieben und vor dem Laden per Prüfsumme kontrolliert. Ein Prozess desselben Benutzers könnte die Datei zwischen Prüfung und Laden tauschen. Das setzt aber voraus, dass bereits fremder Code als dieser Benutzer läuft. | info | akzeptiert |
 | 12 | **Desktop-App (v1.1):** Die EXE ist noch nicht signiert (SmartScreen-Warnung, Freigabe in Schulen nur per Hash). | niedrig | offen, siehe [SIGNING.md](SIGNING.md) |
 | 13 | **Web-App (v1.1):** Beim Abruf über GitHub Pages sieht GitHub (USA) die IP-Adresse. Die App selbst sendet nichts. | info | dokumentiert; Alternative: eigener Schulserver |
+| 14 | **Heimserver:** Es gibt keine Anmeldung. Wer den Server im Netz erreicht, kann alle Profile lesen und ändern. In dieser Variante erlaubt die CSP Verbindungen zur eigenen Adresse (`connect-src 'self'`). | info | dokumentiert: nur im Heimnetz betreiben oder hinter einem Reverse Proxy mit Anmeldung |
 
 **Prüfung:** Automatisiert und in der CI bei jedem Push. Seit v1.1 startet außerdem `tools/build-exe.js --selftest` die EXE allein in einem leeren Ordner. Dabei werden Speichern und Laden der Datei, das Löschen und die Abwesenheit von JS-Fehlern und CSP-Verstößen geprüft. Der Browser-Test lädt die Web-App zusätzlich über http und testet den Offline-Start aus dem Service Worker.
 
 - `tools/check.js` testet XSS-Nutzlasten, Riesenzahlen, unbekannte Felder und Prototype-Pollution gegen die Datenprüfung.
+- `tools/server-test.js` prüft die API des Heimservers, die Liste der ausgelieferten Dateien, das Verhalten bei kaputten Daten und die Speicher-Umleitung.
 - `tools/e2e.js` startet die App mit einem manipulierten Speicherstand und prüft, dass kein Skript läuft und kein HTML eingeschleust wird.
 - Jeder CSP-Verstoß, jeder JS-Fehler und jede Konsolen-Warnung lässt den Browser-Test fehlschlagen.
 

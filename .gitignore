@@ -10,3 +10,5 @@ desktop.ini
 # Desktop-Build
 desktop/bin/
 desktop/obj/
+# Daten des Heimservers (node server/server.js)
+/data/

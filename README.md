@@ -29,6 +29,17 @@ Ein Lernspiel für Kinder: Es bringt ihnen das **Blindschreiben (10-Finger-Syste
 - **EXE auf Schul-PCs:** Manche Schulen blockieren Programme aus Benutzerordnern (AppLocker, SmartScreen). Dann muss die IT die EXE freigeben, am einfachsten über die Prüfsumme (`TastaturTrainer.exe.sha256`) oder, sobald die EXE signiert ist, über den Herausgeber. Siehe [SIGNING.md](SIGNING.md).
 - **Geteilte Rechner:** Jedes Kind legt in der App ein eigenes Profil an. Wenn Benutzerprofile beim Abmelden gelöscht werden, gehen Browser-Ergebnisse verloren. Dann hilft die EXE auf einem Netzlaufwerk oder USB-Stick (die Ergebnisse liegen in der Datei daneben) oder *Einstellungen → Für Eltern → Sicherung*.
 
+## Eigener Heimserver (Docker, Unraid)
+
+Wer die Profile zentral speichern will, damit jedes Gerät im Heimnetz dieselben Kinder und denselben Fortschritt sieht, startet den TastaturTrainer als Container:
+
+```bash
+docker build -t tastaturtrainer .
+docker run -d -p 8080:8080 -v tastaturtrainer-data:/data tastaturtrainer
+```
+
+Die Profile liegen dann in `/data/profiles.json`. Für Unraid gibt es ein Template mit Installationsskript. Alles Weitere steht in [unraid/README.md](unraid/README.md).
+
 ## Sprachen und Tastaturen
 
 | Sprache | Tastatur | Kurs |
@@ -69,6 +80,8 @@ Reines HTML, CSS und JavaScript, ohne Abhängigkeiten. Für die Werkzeuge reicht
 ```bash
 npm run check   # Syntax, Übersetzungen, Kursinhalte, Sicherheitstests der Datenprüfung
 npm run e2e     # Browser-Test mit headless Chrome/Edge (beide Sprachen, CSP, XSS)
+npm run test:server  # Heimserver: API, ausgelieferte Dateien, Daten, Speicher-Umleitung
+npm run serve        # Heimserver lokal starten: http://127.0.0.1:8080, Daten in ./data
 npm run build      # dist/TastaturTrainer-<version>.zip + SHA-256 und dist/site (GitHub Pages)
 npm run build:exe  # dist/TastaturTrainer.exe (Windows, .NET SDK 8 oder neuer)
 npm run test:exe   # EXE bauen und allein in einem leeren Ordner selbst testen
@@ -85,6 +98,7 @@ npm run test:exe   # EXE bauen und allein in einem leeren Ordner selbst testen
 | `js/app.js`, `js/screens.js`, `js/games.js` | Seiten und Spiele |
 | `desktop/` | Desktop-App: WinForms + WebView2, bettet die Web-App ein, speichert in eine JSON-Datei |
 | `manifest.webmanifest`, `sw.js` | installierbare Web-App, offline nutzbar |
+| `server/`, `Dockerfile`, `unraid/` | Heimserver: liefert die Web-App aus und speichert die Profile zentral (siehe [unraid/README.md](unraid/README.md)) |
 | `tools/` | Prüf-, Test- und Build-Skripte, Icon-Generator |
 | `.github/workflows/ci.yml` | Build-Pipeline |
 
@@ -95,4 +109,4 @@ npm run test:exe   # EXE bauen und allein in einem leeren Ordner selbst testen
 
 `npm run check` meldet fehlende Texte, abweichende Platzhalter und Wörter, die auf dem Layout nicht tippbar sind.
 
-**Build-Pipeline** (GitHub Actions): Bei jedem Push und Pull Request laufen `check` und `e2e` unter Linux. Danach werden ZIP und Web-App gebaut, und unter Windows wird die EXE gebaut und selbst getestet. Bei einem Push auf `main` wird die Web-App auf GitHub Pages veröffentlicht. Ein Tag `v*` (z. B. `git tag v1.1.0 && git push --tags`) erstellt ein GitHub-Release mit ZIP, EXE und Prüfsummen.
+**Build-Pipeline** (GitHub Actions): Bei jedem Push und Pull Request laufen `check`, `test:server` und `e2e` unter Linux. Danach werden ZIP und Web-App gebaut, und unter Windows wird die EXE gebaut und selbst getestet. Bei einem Push auf `main` wird die Web-App auf GitHub Pages veröffentlicht. Ein Tag `v*` (z. B. `git tag v1.1.0 && git push --tags`) erstellt ein GitHub-Release mit ZIP, EXE und Prüfsummen.

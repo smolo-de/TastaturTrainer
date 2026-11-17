@@ -1,5 +1,5 @@
 # TastaturTrainer – Build-Pipeline
-#   test     → Syntax, Übersetzungen, Kursinhalte, Datenbereinigung, Browser-Test (Linux, Chrome)
+#   test     → Syntax, Übersetzungen, Kursinhalte, Datenbereinigung, Heimserver, Browser-Test (Linux, Chrome)
 #   build    → Release-ZIP (HTML-Version) und Web-App für GitHub Pages
 #   desktop  → TastaturTrainer.exe bauen und selbst testen (Windows)
 #   pages    → Web-App auf GitHub Pages veröffentlichen (bei Push auf main)
@@ -42,6 +42,9 @@ jobs:
 
       - name: Statische Prüfungen (Syntax, i18n, Kurse, Datenbereinigung, Web-App)
         run: node tools/check.js
+
+      - name: Heimserver (API, ausgelieferte Dateien, Daten, Speicher-Umleitung)
+        run: node tools/server-test.js
 
       - name: Browser-Test (headless Chrome, beide Sprachen, CSP, XSS, offline)
         run: node tools/e2e.js

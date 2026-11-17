@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!-- TastaturTrainer für Unraid. Das Image vorher bauen (docker build -t tastaturtrainer .) oder unter
+     <Repository> das eigene Registry-Image eintragen, z. B. registry.local:5000/tastaturtrainer:latest. -->
+<Container version="2">
+  <Name>tastaturtrainer</Name>
+  <Repository>tastaturtrainer:latest</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/smolo-de/TastaturTrainer/issues</Support>
+  <Project>https://github.com/smolo-de/TastaturTrainer</Project>
+  <Overview>TastaturTrainer - 10-Finger-Lernspiel für Kinder. Die Profile liegen zentral auf dem Server (/data/profiles.json), jedes Gerät im Heimnetz sieht dieselben Profile.</Overview>
+  <Category>Productivity: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://raw.githubusercontent.com/smolo-de/TastaturTrainer/main/icons/icon-192.png</Icon>
+  <ExtraParams>--user 99:100 --memory=256m</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web-Oberfläche" Target="8080" Default="8091" Mode="tcp" Description="Port, unter dem der TastaturTrainer im Heimnetz erreichbar ist" Type="Port" Display="always" Required="true" Mask="false">8091</Config>
+  <Config Name="Daten" Target="/data" Default="/mnt/user/appdata/tastaturtrainer" Mode="rw" Description="profiles.json mit allen Profilen und Ergebnissen (dazu profiles.json.bak = Stand vor der letzten Änderung). Sichern: den Ordner kopieren." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/tastaturtrainer</Config>
+  <Config Name="Anzeige Speicherort" Target="TT_DATA_LABEL" Default="Unraid: /mnt/user/appdata/tastaturtrainer/profiles.json" Mode="" Description="Text, den die App unter „Speicherort der Ergebnisse“ zeigt" Type="Variable" Display="advanced" Required="false" Mask="false">Unraid: /mnt/user/appdata/tastaturtrainer/profiles.json</Config>
+  <Config Name="Zeitzone" Target="TZ" Default="Europe/Berlin" Mode="" Description="Zeitzone des Containers" Type="Variable" Display="advanced" Required="false" Mask="false">Europe/Berlin</Config>
+</Container>
