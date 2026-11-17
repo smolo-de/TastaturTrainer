@@ -1,0 +1,11 @@
+# Nur die Web-App und server/ gehören ins Image (siehe Dockerfile)
+.git
+.github
+data
+dist
+desktop
+tools
+unraid
+node_modules
+*.md
+*.bat
